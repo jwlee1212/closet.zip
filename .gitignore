@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# 개인 도구 설정 (Claude Code 등)
+.claude/
+
+# 의존성·빌드 결과 (하위 프로젝트 .gitignore에도 있음)
+node_modules/
+.next/
+.expo/
+
+# 환경 변수 — API 키가 들어 있으므로 절대 올리지 않음 (예시 파일만 허용)
+.env*
+!.env.example
