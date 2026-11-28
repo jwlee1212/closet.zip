@@ -6,7 +6,7 @@ import {
   BodySpec, Category, Closet, ClosetType, ClothingItem, PUBLIC_CLOSETS, Style, Visibility, createMyFirstCloset,
 } from '@/data/mock';
 
-export type Outfit = { id: string; top?: string; bottom?: string; shoes?: string; outer?: string; sourceClosetId: string };
+export type Outfit = { id: string; top?: string; bottom?: string; shoes?: string; outer?: string; sourceClosetId: string; /** AI 착장 이미지 (480px WebP) */ image?: string };
 export type PendingUpload = { photoUri?: string; sample?: boolean };
 export type AuthProvider = 'kakao' | 'google' | 'email';
 export type User = { name: string; email?: string; provider: AuthProvider };

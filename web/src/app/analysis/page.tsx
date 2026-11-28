@@ -145,7 +145,7 @@ export default function Analysis() {
             : <ClothGlyph category={attr.category} color={attr.color} size={100} />}
         </div>
         <div className="flex flex-col gap-2">
-          {meta?.source === 'gemini'
+          {meta?.source === 'openai'
             ? <Badge label={`AI 분석 완료 · 확신도 ${meta.confidence}%`} tone="success" />
             : <Badge label={meta?.notice ?? '데모 분석'} tone="brand" />}
           <span className="text-[15px] font-semibold">{itemName(attr)}</span>

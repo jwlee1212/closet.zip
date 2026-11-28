@@ -8,7 +8,7 @@
 ```bash
 cd web
 npm install
-cp .env.example .env.local   # GEMINI_API_KEY 입력 (없으면 목업 분석으로 동작)
+cp .env.example .env.local   # OPENAI_API_KEY 입력 (없으면 AI 기능이 목업으로 동작)
 npm run dev                  # http://localhost:3000
 ```
 

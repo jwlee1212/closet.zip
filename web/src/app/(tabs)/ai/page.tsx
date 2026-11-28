@@ -3,12 +3,13 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Lock, Sparkles } from 'lucide-react';
+import { Loader2, Lock, Sparkles } from 'lucide-react';
 import { Badge, Button, Card, ChipRow, InfoBox, Page, SectionHeader } from '@/components/ui';
 import { ClosetCover } from '@/components/ClothArt';
 import { Mannequin } from '@/components/Mannequin';
 import { CATEGORIES, Category, PUBLIC_CLOSETS, itemName, matchScore, weeklySummary } from '@/data/mock';
 import { useApp } from '@/state/AppState';
+import { useRecommendation } from '@/lib/ai';
 
 export default function AiHome() {
   const app = useApp();
@@ -25,13 +26,15 @@ export default function AiHome() {
     [cat, app.styles, app.interests],
   );
 
-  // 오늘의 코디: 내 옷장 기반
-  const mine = app.activeCloset.items;
-  const today = [
-    mine.find((i) => i.category === '상의'),
-    mine.find((i) => i.category === '하의'),
-    mine.find((i) => i.category === '신발'),
-  ];
+  // 오늘의 코디: 내 옷장 + 추구미 + 계절 → AI 추천 (/api/recommend)
+  const closet = app.activeCloset;
+  const { rec, loading, error } = useRecommendation(
+    { closet, styles: app.styles, interests: app.interests, body: app.body },
+    app.subscribed,
+  );
+  const byId = (id?: string) => (id ? closet.items.find((i) => i.id === id) : undefined);
+  const outfit = rec ? { outer: byId(rec.outerId), top: byId(rec.topId), bottom: byId(rec.bottomId), shoes: byId(rec.shoesId) } : undefined;
+  const parts = outfit ? [outfit.outer, outfit.top, outfit.bottom, outfit.shoes].filter((i) => i !== undefined) : [];
 
   if (!app.subscribed) {
     return (
@@ -72,14 +75,27 @@ export default function AiHome() {
       <ChipRow items={['전체', ...CATEGORIES]} value={cat} onChange={(v) => setCat(v as typeof cat)} />
 
       <SectionHeader title="오늘의 추천 코디 · 내 옷장" />
-      <Card href={`/mannequin?closetId=${app.activeCloset.id}`} className="flex-row! items-center gap-3.5">
-        <Mannequin top={today[0]?.color} bottom={today[1]?.color} shoes={today[2]?.color} height={150} body={app.body} />
-        <div className="flex flex-1 flex-col gap-1.5">
-          <p className="text-[15px] font-semibold">{today.filter(Boolean).map((i) => itemName(i!)).join(' + ') || '옷을 더 올려주세요'}</p>
-          <p className="text-[13px] text-sub">오늘 12°C · 맑음. 가진 옷만으로 &quot;{mainStyle}&quot; 무드를 맞췄어요.</p>
-          <p className="text-xs font-semibold text-accent">마네킹으로 보기 ›</p>
-        </div>
-      </Card>
+      {!closet.items.length ? (
+        <Card href="/upload"><p className="text-sm">옷을 올리면 내 옷만으로 코디를 추천해 드려요 ›</p></Card>
+      ) : loading ? (
+        <Card className="flex-row! items-center gap-3 py-8">
+          <Loader2 size={22} className="animate-spin text-accent" />
+          <p className="text-sm text-sub">AI가 내 옷장에서 오늘의 코디를 고르고 있어요</p>
+        </Card>
+      ) : error || !rec || !outfit ? (
+        <Card><p className="text-sm text-sub">{error ?? '추천을 불러오지 못했어요'}</p></Card>
+      ) : (
+        <Card href={`/mannequin?closetId=${closet.id}&rec=1`} className="flex-row! items-center gap-3.5">
+          <Mannequin top={outfit.top?.color} bottom={outfit.bottom?.color} shoes={outfit.shoes?.color} outer={outfit.outer?.color} height={150} body={app.body} />
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <Badge label={rec.source === 'openai' ? `AI 추천 · ${rec.basis}` : `${rec.basis} 기준`} tone={rec.source === 'openai' ? 'influencer' : 'neutral'} />
+            <p className="text-[15px] font-semibold">{rec.title}</p>
+            <p className="text-[13px] text-sub">{parts.map((i) => itemName(i)).join(' + ')}</p>
+            <p className="text-[13px] leading-5">{rec.reason}</p>
+            <p className="text-xs font-semibold text-accent">AI 아바타로 입혀보기 ›</p>
+          </div>
+        </Card>
+      )}
 
       <SectionHeader title="이번 주 AI 요약" />
       <Card tone="accent">

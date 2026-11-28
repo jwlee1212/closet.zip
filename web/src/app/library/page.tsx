@@ -22,7 +22,10 @@ export default function Library() {
           const parts = [get(o.outer), get(o.top), get(o.bottom), get(o.shoes)].filter(Boolean);
           return (
             <Card key={o.id} href={`/mannequin?closetId=${o.sourceClosetId}`} className="flex-row! items-center gap-3">
-              <Mannequin top={get(o.top)?.color} bottom={get(o.bottom)?.color} shoes={get(o.shoes)?.color} outer={get(o.outer)?.color} height={120} body={app.body} />
+              {o.image
+                // eslint-disable-next-line @next/next/no-img-element -- 저장한 AI 착장 이미지(data URL)
+                ? <img src={o.image} alt="AI 착장" className="h-[120px] w-[80px] shrink-0 rounded-lg object-cover" />
+                : <Mannequin top={get(o.top)?.color} bottom={get(o.bottom)?.color} shoes={get(o.shoes)?.color} outer={get(o.outer)?.color} height={120} body={app.body} />}
               <div className="flex flex-1 flex-col gap-1">
                 <span className="text-[15px] font-semibold">{parts.map((p) => itemName(p!)).join(' + ')}</span>
                 <span className="text-xs text-muted">출처: {app.findCloset(o.sourceClosetId)?.name}</span>

@@ -1,4 +1,4 @@
-import { COLOR_HEX, garmentPhotos, Category, ClothingItem } from '@/data/mock';
+import { COLOR_HEX, itemPhotoSrc, Category, ClothingItem } from '@/data/mock';
 
 // 사진 대신 쓰는 의류 일러스트. 실제 서비스에서는 업로드한 옷 사진(누끼)으로 대체된다.
 const shade = (hex: string, amt: number) => {
@@ -45,8 +45,7 @@ export function ClothGlyph({ category, color, size = 64 }: { category: Category;
 export function ClothThumb({ item, height = 120, className = '' }: {
   item: Pick<ClothingItem, 'category' | 'color' | 'photoUri'> & Partial<Pick<ClothingItem, 'kind'>>; height?: number; className?: string;
 }) {
-  const catalog = garmentPhotos[`${item.color} ${item.kind}`];
-  const photo = item.photoUri || (catalog && `/looks/${catalog}.webp`);
+  const photo = itemPhotoSrc(item);
   return (
     <div className={`relative flex items-center justify-center overflow-hidden rounded-xl bg-surface ${className}`} style={{ height }}>
       {photo ? (

@@ -81,6 +81,12 @@ export const garmentPhotos: Record<string, string> = {
   '블랙 와이드 슬랙스': 'slacks', '데님 데님 팬츠': 'jeans',
 };
 
+/** 옷의 실제 사진 경로: 사용자가 올린 사진(data URL) → 카탈로그 사진(/looks) → 없음 */
+export const itemPhotoSrc = (i: Pick<ClothingItem, 'color' | 'photoUri'> & Partial<Pick<ClothingItem, 'kind'>>) => {
+  const catalog = garmentPhotos[`${i.color} ${i.kind}`];
+  return i.photoUri || (catalog ? `/looks/${catalog}.webp` : undefined);
+};
+
 function build(closetId: string, specs: Spec[], count: number, brand?: string): ClothingItem[] {
   const out: ClothingItem[] = [];
   for (let n = 0; n < count; n++) {
