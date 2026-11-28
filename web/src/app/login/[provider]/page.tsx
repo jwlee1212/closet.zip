@@ -35,7 +35,7 @@ const PROVIDERS: Record<ProviderKey, {
   },
   google: {
     label: 'Google',
-    headerClass: 'bg-white text-ink border-b border-line',
+    headerClass: 'bg-paper text-ink border-b border-line',
     buttonVariant: 'primary',
     accounts: [
       { name: '이재우', email: 'jaewoo@example.com' },
@@ -147,12 +147,12 @@ export default function MockSocialLogin() {
         </p>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-[390px] bg-white/95 px-5 pt-2 pb-4 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-[390px] bg-paper/95 px-5 pt-2 pb-4 backdrop-blur">
         <Button label="동의하고 계속하기" variant={cfg.buttonVariant} disabled={!requiredOn || loading} onClick={proceed} />
       </div>
 
       {loading && (
-        <div className="animate-fade fixed inset-0 z-50 mx-auto flex max-w-[390px] flex-col items-center justify-center gap-3 bg-white/90">
+        <div className="animate-fade fixed inset-0 z-50 mx-auto flex max-w-[390px] flex-col items-center justify-center gap-3 bg-paper/90">
           <Loader2 size={32} className="animate-spin text-ink" />
           <p className="text-sm text-sub">내 옷장으로 돌아가는 중…</p>
         </div>

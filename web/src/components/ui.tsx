@@ -31,7 +31,7 @@ export function Page({
       {title !== undefined && <AppBar title={title} large={large} left={left} right={right} />}
       <main className={cx('flex flex-1 flex-col gap-4 px-4 pt-2', bottomPad, className)}>{children}</main>
       {footer && (
-        <div className={cx('fixed inset-x-0 z-20 mx-auto flex max-w-[390px] flex-col gap-2 bg-white/95 px-4 pt-2 pb-3 backdrop-blur', tabbed ? 'bottom-16' : 'bottom-0')}>
+        <div className={cx('fixed inset-x-0 z-20 mx-auto flex max-w-[390px] flex-col gap-2 bg-paper/95 px-4 pt-2 pb-3 backdrop-blur', tabbed ? 'bottom-16' : 'bottom-0')}>
           {footer}
         </div>
       )}
@@ -50,7 +50,7 @@ export function AppBar({ title, large, left = 'back', right }: {
 }) {
   const goBack = useGoBack();
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center bg-white/90 px-3 backdrop-blur">
+    <header className="sticky top-0 z-10 flex h-14 items-center bg-paper/90 px-3 backdrop-blur">
       <div className={cx('flex items-center', large && left === 'none' ? 'w-1' : 'w-14')}>
         {left !== 'none' && (
           <button onClick={goBack} aria-label={left === 'back' ? '뒤로' : '닫기'} className="-m-2 p-2">
@@ -138,8 +138,8 @@ export function ChipRow({ items, value, onChange, wrap }: {
 type Tone = 'neutral' | 'pro' | 'influencer' | 'brand' | 'ad' | 'success' | 'outline';
 const badgeStyle: Record<Tone, string> = {
   neutral: 'bg-surface-strong text-sub border-surface-strong',
-  pro: 'bg-accent text-white border-accent',
-  influencer: 'bg-accent-soft text-[#4440C9] border-accent-soft',
+  pro: 'bg-sand text-ink border-sand',
+  influencer: 'bg-accent-soft text-[#6b5a43] border-accent-soft',
   brand: 'bg-[#FFF1DC] text-[#9A5B00] border-[#FFF1DC]',
   ad: 'bg-[#FFE7E0] text-[#B23B16] border-[#FFE7E0]',
   success: 'bg-[#E3F5EA] text-[#1F7A45] border-[#E3F5EA]',
@@ -332,7 +332,7 @@ export function BottomSheet({ open, onClose, children }: { open: boolean; onClos
   return (
     <div className="fixed inset-0 z-50 mx-auto max-w-[390px]" role="dialog" aria-modal>
       <button aria-label="닫기" onClick={onClose} className="animate-fade absolute inset-0 bg-black/45" />
-      <div className="animate-sheet absolute inset-x-0 bottom-0 flex flex-col gap-3 rounded-t-[20px] bg-white p-5 pt-2.5 pb-[max(20px,env(safe-area-inset-bottom))]">
+      <div className="animate-sheet absolute inset-x-0 bottom-0 flex flex-col gap-3 rounded-t-[20px] bg-paper p-5 pt-2.5 pb-[max(20px,env(safe-area-inset-bottom))]">
         <span className="mx-auto mb-1.5 h-1 w-10 rounded bg-line" />
         {children}
       </div>

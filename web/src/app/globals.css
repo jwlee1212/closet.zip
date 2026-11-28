@@ -1,19 +1,21 @@
 @import "tailwindcss";
 
-/* 디자인 토큰 — Figma v2 와이어프레임(390×844, 뉴트럴 톤) 기준 */
+/* 디자인 토큰 — Figma 와이어프레임의 베이지 + 블랙 조합 */
 @theme {
-  --color-ink: #111827;
-  --color-sub: #475569;
-  --color-muted: #64748b;
-  --color-surface: #f3f4f6;
-  --color-surface-strong: #e5e7eb;
-  --color-line: #dfe3e9;
-  --color-accent: #2563eb;
-  --color-accent-soft: #eff6ff;
-  --color-accent-ink: #1d4ed8;
+  --color-ink: #141414;          /* 본문·주요 버튼 (블랙) */
+  --color-sub: #5c554d;          /* 보조 텍스트 (웜 그레이) */
+  --color-muted: #8c8378;        /* 흐린 텍스트 */
+  --color-paper: #faf7f2;        /* 앱 바탕 (아이보리) */
+  --color-surface: #f2ece3;      /* 칩·입력·회색 박스 (라이트 베이지) */
+  --color-surface-strong: #e7ded2;
+  --color-line: #e4dacd;         /* 구분선·테두리 */
+  --color-accent: #141414;       /* 강조 버튼·링크도 블랙으로 통일 */
+  --color-accent-soft: #efe6d8;  /* 강조 배경 (베이지) */
+  --color-accent-ink: #000000;
+  --color-sand: #d9c7a7;         /* 포인트 베이지 (PRO 배지 등) */
   --color-kakao: #fee500;
-  --color-danger: #d93f3f;
-  --color-backdrop: #f4f4f5;
+  --color-danger: #c2412d;
+  --color-backdrop: #ebe4d9;     /* 데스크톱에서 폰 컬럼 바깥 */
 
   --font-sans: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
