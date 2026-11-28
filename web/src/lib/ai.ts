@@ -2,11 +2,15 @@
 // 브라우저 쪽 AI 도우미 — 서버 API 호출, 결과 캐시, 이미지 축소
 // 같은 옷장·같은 날에는 추천·착장 이미지를 다시 만들지 않도록 sessionStorage에 캐시한다 (API 요금 절약)
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Recommendation } from '@/app/api/recommend/route';
+import type { Weather } from '@/server/weather';
 import type { BodySpec, Closet } from '@/data/mock';
 
-export type { Recommendation };
+export type { Recommendation, Weather };
+
+/** 상황(TPO) 선택지 — AI 추천 화면 칩 */
+export const OCCASIONS = ['데일리', '출근', '데이트', '운동', '여행', '하객'] as const;
 
 const cacheGet = <T,>(key: string): T | undefined => {
   try {
@@ -24,21 +28,66 @@ const cacheSet = (key: string, v: unknown) => {
   }
 };
 
-type RecContext = { closet: Closet; styles: string[]; interests: string[]; body?: BodySpec };
-
-const recKey = ({ closet, styles, interests, body }: RecContext) =>
-  `rec:${closet.id}:${new Date().toDateString()}:${styles.join(',')}:${interests.join(',')}:${body?.fit ?? ''}:${closet.items.map((i) => i.id).join(',')}`;
-
-/** 오늘의 추천 코디 — 마네킹 화면에서 같은 결과를 다시 쓸 수 있게 캐시를 공유한다 */
-export const cachedRecommendation = (ctx: RecContext) => cacheGet<Recommendation>(recKey(ctx));
-
-export function useRecommendation(ctx: RecContext, enabled: boolean) {
-  const key = recKey(ctx);
-  const [state, setState] = useState<{ key?: string; rec?: Recommendation; error?: string }>({});
-  const cached = cacheGet<Recommendation>(key);
+/** 오늘 날씨 — 기본 서울, "내 위치" 허용 시 현재 위치 (위치는 이 기기 sessionStorage에만 기억) */
+export function useWeather() {
+  const [coords, setCoords] = useState(() => cacheGet<{ lat: number; lon: number }>('geo'));
+  const key = `weather:${coords ? `${coords.lat.toFixed(2)},${coords.lon.toFixed(2)}` : 'seoul'}:${new Date().getHours()}`;
+  const cached = cacheGet<Weather>(key);
+  const [state, setState] = useState<{ key?: string; weather?: Weather; failed?: boolean }>({});
 
   useEffect(() => {
-    if (!enabled || cached || !ctx.closet.items.length) return;
+    if (cached) return;
+    const ctrl = new AbortController();
+    fetch(coords ? `/api/weather?lat=${coords.lat}&lon=${coords.lon}` : '/api/weather', { signal: ctrl.signal })
+      .then(async (r) => {
+        if (!r.ok) throw new Error('weather');
+        const w = (await r.json()) as Weather;
+        cacheSet(key, w);
+        setState({ key, weather: w });
+      })
+      .catch((e: Error) => { if (e.name !== 'AbortError') setState({ key, failed: true }); });
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- key가 위치·시간을 담고 있다
+  }, [key]);
+
+  const locate = useCallback(() => new Promise<boolean>((resolve) => {
+    if (!navigator.geolocation) return resolve(false);
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const c = { lat: Math.round(p.coords.latitude * 100) / 100, lon: Math.round(p.coords.longitude * 100) / 100 };
+        cacheSet('geo', c);
+        setCoords(c);
+        resolve(true);
+      },
+      () => resolve(false),
+      { timeout: 8000, maximumAge: 30 * 60_000 },
+    );
+  }), []);
+
+  const weather = cached ?? (state.key === key ? state.weather : undefined);
+  const failed = state.key === key && !!state.failed;
+  return { weather, ready: !!weather || failed, locate };
+}
+
+type RecContext = { closet: Closet; styles: string[]; interests: string[]; body?: BodySpec; occasion: string; weather?: Weather };
+
+const recKey = ({ closet, styles, interests, body, occasion, weather }: RecContext, round: number) =>
+  `rec:${closet.id}:${new Date().toDateString()}:${occasion}:${weather ? `${weather.temp}${weather.condition}` : '-'}:${round}:${styles.join(',')}:${interests.join(',')}:${body?.fit ?? ''}:${closet.items.map((i) => i.id).join(',')}`;
+
+/** 마네킹 화면이 이어받을 마지막 추천 */
+export const cachedRecommendation = (closetId: string) => cacheGet<Recommendation>(`rec:last:${closetId}`);
+
+/** 오늘의 추천 코디 — 날씨·상황이 바뀌거나 "다른 코디"를 누르면 다시 받는다 */
+export function useRecommendation(ctx: RecContext, enabled: boolean) {
+  const [round, setRound] = useState(0);
+  const key = recKey(ctx, round);
+  const [state, setState] = useState<{ key?: string; rec?: Recommendation; error?: string }>({});
+  const cached = cacheGet<Recommendation>(key);
+  const [avoid, setAvoid] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (cached) { cacheSet(`rec:last:${ctx.closet.id}`, cached); return; }
+    if (!enabled || !ctx.closet.items.length) return;
     const ctrl = new AbortController();
     fetch('/api/recommend', {
       method: 'POST',
@@ -49,6 +98,9 @@ export function useRecommendation(ctx: RecContext, enabled: boolean) {
         interests: ctx.interests,
         fit: ctx.body?.fit,
         month: new Date().getMonth() + 1,
+        weather: ctx.weather,
+        occasion: ctx.occasion,
+        avoid: round > 0 ? avoid : [],
       }),
       signal: ctrl.signal,
     })
@@ -56,15 +108,21 @@ export function useRecommendation(ctx: RecContext, enabled: boolean) {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error ?? '추천을 불러오지 못했어요');
         cacheSet(key, data);
+        cacheSet(`rec:last:${ctx.closet.id}`, data);
         setState({ key, rec: data });
       })
       .catch((e: Error) => { if (e.name !== 'AbortError') setState({ key, error: e.message }); });
     return () => ctrl.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- key가 옷장·추구미 변화를 모두 담고 있다
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- key가 옷장·날씨·상황·회차를 모두 담고 있다
   }, [key, enabled]);
 
   const rec = cached ?? (state.key === key ? state.rec : undefined);
-  return { rec, error: state.key === key ? state.error : undefined, loading: enabled && !rec && !(state.key === key && state.error) };
+  /** 다른 코디 보기: 지금 추천에 쓴 옷은 피해서 다시 받는다 */
+  const another = () => {
+    if (rec) setAvoid([rec.outerId, rec.topId, rec.bottomId, rec.shoesId].filter((x): x is string => !!x));
+    setRound((n) => n + 1);
+  };
+  return { rec, error: state.key === key ? state.error : undefined, loading: enabled && !rec && !(state.key === key && state.error), another };
 }
 
 export type TryOnPart = { slot: string; name: string; photo?: string };

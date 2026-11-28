@@ -83,7 +83,7 @@ export default function MockSocialLogin() {
     setTimeout(() => {
       app.login(user);
       app.toast(`${cfg.label} 계정으로 로그인했어요`);
-      router.replace(app.onboarded ? '/explore' : '/onboarding');
+      router.replace(app.onboarded ? '/ai' : '/onboarding');
     }, 900);
   };
 

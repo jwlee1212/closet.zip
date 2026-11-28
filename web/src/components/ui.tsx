@@ -25,13 +25,14 @@ export function Page({
   overlay?: React.ReactNode;
   className?: string;
 }) {
-  const bottomPad = footer ? (tabbed ? 'pb-44' : 'pb-32') : tabbed ? 'pb-24' : 'pb-10';
+  const bottomPad = footer ? (tabbed ? 'pb-48' : 'pb-36') : tabbed ? 'pb-28' : 'pb-12';
   return (
     <div className="flex min-h-dvh flex-col">
       {title !== undefined && <AppBar title={title} large={large} left={left} right={right} />}
-      <main className={cx('flex flex-1 flex-col gap-4 px-4 pt-2', bottomPad, className)}>{children}</main>
+      <main className={cx('stagger flex flex-1 flex-col gap-5 px-5 pt-2', bottomPad, className)}>{children}</main>
       {footer && (
-        <div className={cx('fixed inset-x-0 z-20 mx-auto flex max-w-[390px] flex-col gap-2 bg-paper/95 px-4 pt-2 pb-3 backdrop-blur', tabbed ? 'bottom-16' : 'bottom-0')}>
+        // 하단 고정 버튼: 위로 갈수록 투명해지는 그라데이션으로 본문과 자연스럽게 이어진다
+        <div className={cx('fixed inset-x-0 z-20 mx-auto flex max-w-[390px] flex-col gap-2 bg-gradient-to-t from-paper from-70% to-paper/0 px-5 pt-6 pb-4', tabbed ? 'bottom-16' : 'bottom-0')}>
           {footer}
         </div>
       )}
@@ -42,7 +43,7 @@ export function Page({
 
 export function useGoBack() {
   const router = useRouter();
-  return () => (window.history.length > 1 ? router.back() : router.push('/explore'));
+  return () => (window.history.length > 1 ? router.back() : router.push('/ai'));
 }
 
 export function AppBar({ title, large, left = 'back', right }: {
@@ -50,15 +51,15 @@ export function AppBar({ title, large, left = 'back', right }: {
 }) {
   const goBack = useGoBack();
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center bg-paper/90 px-3 backdrop-blur">
-      <div className={cx('flex items-center', large && left === 'none' ? 'w-1' : 'w-14')}>
+    <header className={cx('sticky top-0 z-10 flex items-center bg-paper/90 px-3 backdrop-blur-md', large ? 'h-16 pt-2' : 'h-14')}>
+      <div className={cx('flex items-center', large && left === 'none' ? 'w-2' : 'w-14')}>
         {left !== 'none' && (
-          <button onClick={goBack} aria-label={left === 'back' ? '뒤로' : '닫기'} className="-m-2 p-2">
+          <button onClick={goBack} aria-label={left === 'back' ? '뒤로' : '닫기'} className="pressable -m-2 rounded-full p-2 active:bg-surface">
             {left === 'back' ? <ChevronLeft size={26} /> : <X size={24} />}
           </button>
         )}
       </div>
-      <h1 className={cx('flex-1 truncate', large ? 'text-[22px] font-bold tracking-tight' : 'text-center text-[17px] font-semibold')}>
+      <h1 className={cx('flex-1 truncate', large ? 'text-[26px] font-bold tracking-[-0.02em]' : 'text-center text-[17px] font-semibold tracking-[-0.01em]')}>
         {title}
       </h1>
       <div className="flex w-14 items-center justify-end">{right}</div>
@@ -67,7 +68,7 @@ export function AppBar({ title, large, left = 'back', right }: {
 }
 
 export function TextAction({ label, onClick, href, muted }: { label: string; onClick?: () => void; href?: string; muted?: boolean }) {
-  const cls = cx('text-sm font-medium whitespace-nowrap', muted ? 'text-sub' : 'text-ink');
+  const cls = cx('pressable rounded-lg px-1 text-[15px] font-semibold whitespace-nowrap', muted ? 'text-muted' : 'text-ink');
   return href ? <Link href={href} className={cls}>{label}</Link> : <button onClick={onClick} className={cls}>{label}</button>;
 }
 
@@ -76,7 +77,7 @@ export function TextAction({ label, onClick, href, muted }: { label: string; onC
 type BtnVariant = 'primary' | 'secondary' | 'outline' | 'kakao' | 'accent' | 'danger';
 const btnStyle: Record<BtnVariant, string> = {
   primary: 'bg-ink text-white',
-  secondary: 'bg-surface-strong text-ink',
+  secondary: 'bg-surface text-ink',
   outline: 'bg-white text-ink border border-line',
   kakao: 'bg-kakao text-[#191600]',
   accent: 'bg-accent text-white',
@@ -90,13 +91,13 @@ export function Button({
   disabled?: boolean; pro?: boolean; className?: string; type?: 'button' | 'submit';
 }) {
   const cls = cx(
-    'flex h-[50px] w-full items-center justify-center gap-1.5 rounded-xl px-4 text-[15px] font-semibold transition active:opacity-80',
-    btnStyle[variant], disabled && 'pointer-events-none opacity-35', className,
+    'pressable flex h-14 w-full items-center justify-center gap-1.5 rounded-2xl px-4 text-[17px] font-semibold tracking-[-0.01em]',
+    btnStyle[variant], disabled && 'pointer-events-none opacity-30', className,
   );
   const body = (
     <>
-      {Icon && <Icon size={18} />}
-      <span>{label}</span>
+      {Icon && <Icon size={18} className="shrink-0" />}
+      <span className="truncate whitespace-nowrap">{label}</span>
       {pro && <Badge label="PRO" tone="pro" className="ml-1" />}
     </>
   );
@@ -106,7 +107,7 @@ export function Button({
 }
 
 export function ButtonPair({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-2 gap-2">{children}</div>;
+  return <div className="grid grid-cols-2 gap-2.5">{children}</div>;
 }
 
 export function Chip({ label, selected, onClick, small }: { label: string; selected?: boolean; onClick?: () => void; small?: boolean }) {
@@ -115,10 +116,10 @@ export function Chip({ label, selected, onClick, small }: { label: string; selec
       onClick={onClick}
       disabled={!onClick}
       className={cx(
-        'shrink-0 rounded-full border text-[13px] font-medium whitespace-nowrap transition',
-        small ? 'h-7 px-2.5' : 'h-8 px-3.5',
-        selected ? 'border-ink bg-ink text-white' : 'border-line bg-white text-ink',
-        !onClick && 'cursor-default',
+        'shrink-0 rounded-full font-semibold whitespace-nowrap transition-colors duration-200',
+        small ? 'h-7 px-3 text-[13px]' : 'h-9 px-4 text-[14px]',
+        selected ? 'bg-ink text-white' : 'bg-surface text-sub',
+        onClick ? 'pressable' : 'cursor-default',
       )}
     >
       {label}
@@ -131,8 +132,8 @@ export function ChipRow({ items, value, onChange, wrap }: {
 }) {
   const sel = (x: string) => (Array.isArray(value) ? value.includes(x) : value === x);
   const chips = items.map((x) => <Chip key={x} label={x} selected={sel(x)} onClick={onChange ? () => onChange(x) : undefined} />);
-  if (wrap) return <div className="flex flex-wrap gap-1.5">{chips}</div>;
-  return <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4">{chips}</div>;
+  if (wrap) return <div className="flex flex-wrap gap-2">{chips}</div>;
+  return <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">{chips}</div>;
 }
 
 type Tone = 'neutral' | 'pro' | 'influencer' | 'brand' | 'ad' | 'success' | 'outline';
@@ -147,7 +148,7 @@ const badgeStyle: Record<Tone, string> = {
 };
 export function Badge({ label, tone = 'neutral', className }: { label: string; tone?: Tone; className?: string }) {
   return (
-    <span className={cx('inline-flex h-[21px] shrink-0 items-center self-start rounded-md border px-1.5 text-[11px] font-bold whitespace-nowrap', badgeStyle[tone], className)}>
+    <span className={cx('inline-flex h-[22px] shrink-0 items-center self-start rounded-full border px-2 text-[11px] font-bold whitespace-nowrap', badgeStyle[tone], className)}>
       {label}
     </span>
   );
@@ -161,37 +162,37 @@ export function Row({ label, value, onClick, href, danger }: {
 }) {
   const inner = (
     <>
-      <span className={cx('text-sm', danger && 'text-danger')}>{label}</span>
+      <span className={cx('text-[16px] tracking-[-0.01em]', danger ? 'text-danger' : 'text-ink')}>{label}</span>
       <span className="flex min-w-0 items-center gap-1">
-        {value !== undefined && <span className="truncate text-[13px] text-sub">{value}</span>}
-        {(onClick || href) && <ChevronRight size={16} className="shrink-0 text-muted" />}
+        {value !== undefined && <span className="truncate text-[15px] text-sub">{value}</span>}
+        {(onClick || href) && <ChevronRight size={18} className="shrink-0 text-muted" />}
       </span>
     </>
   );
-  const cls = 'flex min-h-12 w-full items-center justify-between gap-3 border-b border-line text-left';
-  if (href) return <Link href={href} className={cls}>{inner}</Link>;
-  if (onClick) return <button onClick={onClick} className={cx(cls, 'active:bg-surface')}>{inner}</button>;
+  const cls = '-mx-2 flex min-h-14 w-[calc(100%+16px)] items-center justify-between gap-3 rounded-xl px-2 text-left';
+  if (href) return <Link href={href} className={cx(cls, 'pressable-soft pressable active:bg-surface')}>{inner}</Link>;
+  if (onClick) return <button onClick={onClick} className={cx(cls, 'pressable-soft pressable active:bg-surface')}>{inner}</button>;
   return <div className={cls}>{inner}</div>;
 }
 
 export function SectionHeader({ title, action, href }: { title: string; action?: string; href?: string }) {
   return (
-    <div className="mt-1 flex items-center justify-between">
-      <h2 className="text-[15px] font-semibold">{title}</h2>
-      {action && href && <Link href={href} className="text-sm text-sub">{action}</Link>}
+    <div className="mt-3 flex items-center justify-between">
+      <h2 className="text-[20px] font-bold tracking-[-0.02em]">{title}</h2>
+      {action && href && <Link href={href} className="pressable text-[14px] font-medium text-sub">{action}</Link>}
     </div>
   );
 }
 
 export function Label({ children }: { children: React.ReactNode }) {
-  return <h3 className="mt-1 text-[15px] font-semibold">{children}</h3>;
+  return <h3 className="mt-2 text-[17px] font-bold tracking-[-0.01em]">{children}</h3>;
 }
 
 export function InfoBox({ children, icon: Icon = Info, tone = 'neutral' }: { children: React.ReactNode; icon?: LucideIcon; tone?: 'neutral' | 'accent' }) {
   const accent = tone === 'accent';
   return (
-    <div className={cx('flex gap-2 rounded-xl p-3 text-[13px] leading-[18px]', accent ? 'bg-accent-soft text-accent-ink' : 'bg-surface text-sub')}>
-      <Icon size={16} className={cx('mt-px shrink-0', accent ? 'text-accent' : 'text-sub')} />
+    <div className={cx('flex gap-2.5 rounded-2xl p-4 text-[14px] leading-[21px]', accent ? 'bg-accent-soft text-accent-ink' : 'bg-surface text-sub')}>
+      <Icon size={18} className={cx('mt-px shrink-0', accent ? 'text-accent' : 'text-muted')} />
       <p>{children}</p>
     </div>
   );
@@ -201,8 +202,8 @@ export function ProgressBar({ value, max, tone = 'primary' }: { value: number; m
   const pct = Math.max(0, Math.min(1, value / max)) * 100;
   const c = tone === 'accent' ? 'bg-accent' : tone === 'danger' ? 'bg-danger' : 'bg-ink';
   return (
-    <div className="h-2 overflow-hidden rounded bg-surface-strong">
-      <div className={cx('h-2 rounded transition-all', c)} style={{ width: `${pct}%` }} />
+    <div className="h-2 overflow-hidden rounded-full bg-surface-strong">
+      <div className={cx('animate-grow h-2 rounded-full transition-[width] duration-700 ease-out', c)} style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -215,11 +216,11 @@ export function Avatar({ size = 28, label }: { size?: number; label?: string }) 
   );
 }
 
-const cardTone = { default: 'border-line bg-white', muted: 'border-surface bg-surface', accent: 'border-accent-soft bg-accent-soft' };
+const cardTone = { default: 'border-white bg-white', muted: 'border-surface bg-surface', accent: 'border-accent-soft bg-accent-soft' };
 export function Card({ children, className, onClick, href, tone = 'default' }: {
   children: React.ReactNode; className?: string; onClick?: () => void; href?: string; tone?: keyof typeof cardTone;
 }) {
-  const cls = cx('flex flex-col gap-2.5 rounded-2xl border p-3.5 text-left', cardTone[tone], (onClick || href) && 'transition active:opacity-85', className);
+  const cls = cx('flex flex-col gap-3 rounded-[20px] border p-5 text-left', cardTone[tone], (onClick || href) && 'pressable pressable-soft', className);
   if (href) return <Link href={href} className={cls}>{children}</Link>;
   if (onClick) return <button onClick={onClick} className={cls}>{children}</button>;
   return <div className={cls}>{children}</div>;
@@ -227,8 +228,8 @@ export function Card({ children, className, onClick, href, tone = 'default' }: {
 
 export function Radio({ on }: { on: boolean }) {
   return (
-    <span className={cx('flex size-[22px] shrink-0 items-center justify-center rounded-full border-[1.5px]', on ? 'border-ink bg-ink' : 'border-line')}>
-      {on && <Check size={14} className="text-white" strokeWidth={3} />}
+    <span className={cx('flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-200', on ? 'border-ink bg-ink' : 'border-surface-strong')}>
+      {on && <Check size={14} className="animate-pop text-white" strokeWidth={3} />}
     </span>
   );
 }
@@ -237,7 +238,7 @@ export function OptionCard({ title, desc, right, selected, onClick, extra }: {
   title: string; desc: string; right?: string; selected: boolean; onClick: () => void; extra?: React.ReactNode;
 }) {
   return (
-    <button onClick={onClick} className={cx('flex items-center gap-3 rounded-2xl border p-3.5 text-left transition', selected ? 'border-ink ring-1 ring-ink' : 'border-line')}>
+    <button onClick={onClick} className={cx('pressable pressable-soft flex items-center gap-3.5 rounded-[20px] border-2 bg-white p-4 text-left', selected ? 'border-ink' : 'border-white')}>
       <Radio on={selected} />
       <span className="flex flex-1 flex-col gap-1">
         <span className="text-[15px] font-semibold">{title}</span>
@@ -252,12 +253,12 @@ export function OptionCard({ title, desc, right, selected, onClick, extra }: {
 export function Input({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (t: string) => void; placeholder?: string }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[15px] font-semibold">{label}</span>
+      <span className="text-[14px] font-medium text-sub">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-12 rounded-xl border border-line px-3.5 text-[15px] outline-none placeholder:text-muted focus:border-ink"
+        className="h-14 rounded-2xl border-2 border-surface bg-surface px-4 text-[17px] outline-none transition-colors placeholder:text-muted focus:border-ink focus:bg-white"
       />
     </label>
   );
@@ -267,8 +268,8 @@ export function StatGrid({ stats }: { stats: { value: string; label: string }[] 
   return (
     <div className="grid grid-cols-3 gap-2">
       {stats.map((st) => (
-        <div key={st.label} className="flex flex-col items-center gap-0.5 rounded-xl bg-surface py-3">
-          <span className="text-lg font-bold">{st.value}</span>
+        <div key={st.label} className="flex flex-col items-center gap-0.5 rounded-2xl bg-white py-4">
+          <span className="text-[20px] font-bold tracking-[-0.02em]">{st.value}</span>
           <span className="text-xs text-muted">{st.label}</span>
         </div>
       ))}
@@ -296,9 +297,9 @@ export function ItemGrid({ items, hrefFor, onPick, renderBadge }: {
           </>
         );
         return onPick ? (
-          <button key={it.id} onClick={() => onPick(it)} className="relative text-left">{inner}</button>
+          <button key={it.id} onClick={() => onPick(it)} className="pressable relative text-left">{inner}</button>
         ) : (
-          <Link key={it.id} href={hrefFor?.(it) ?? `/item/${it.id}`} className="relative">{inner}</Link>
+          <Link key={it.id} href={hrefFor?.(it) ?? `/item/${it.id}`} className="pressable relative">{inner}</Link>
         );
       })}
     </div>
@@ -308,7 +309,7 @@ export function ItemGrid({ items, hrefFor, onPick, renderBadge }: {
 export function ClosetCard({ closet, href, liked, onLike }: { closet: Closet; href: string; liked?: boolean; onLike?: () => void }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <Link href={href} className="transition active:opacity-85"><ClosetCover items={closet.items} height={260} /></Link>
+      <Link href={href} className="pressable pressable-soft overflow-hidden rounded-[20px]"><ClosetCover items={closet.items} height={260} /></Link>
       <div className="flex items-center gap-2.5">
         <Avatar size={28} />
         <Link href={href} className="min-w-0 flex-1">
@@ -317,8 +318,8 @@ export function ClosetCard({ closet, href, liked, onLike }: { closet: Closet; hr
         </Link>
         <Badge label={closet.type} tone={typeTone(closet.type)} />
         {onLike && (
-          <button onClick={onLike} aria-label="관심 옷장" className="p-1">
-            <Heart size={20} className={liked ? 'fill-danger text-danger' : 'text-muted'} />
+          <button onClick={onLike} aria-label="관심 옷장" className="pressable rounded-full p-1.5 active:bg-surface">
+            <Heart key={String(liked)} size={22} className={liked ? 'animate-pop fill-danger text-danger' : 'text-muted'} />
           </button>
         )}
       </div>
@@ -332,8 +333,8 @@ export function BottomSheet({ open, onClose, children }: { open: boolean; onClos
   return (
     <div className="fixed inset-0 z-50 mx-auto max-w-[390px]" role="dialog" aria-modal>
       <button aria-label="닫기" onClick={onClose} className="animate-fade absolute inset-0 bg-black/45" />
-      <div className="animate-sheet absolute inset-x-0 bottom-0 flex flex-col gap-3 rounded-t-[20px] bg-paper p-5 pt-2.5 pb-[max(20px,env(safe-area-inset-bottom))]">
-        <span className="mx-auto mb-1.5 h-1 w-10 rounded bg-line" />
+      <div className="animate-sheet absolute inset-x-0 bottom-0 flex flex-col gap-3 rounded-t-[28px] bg-paper p-6 pt-3 pb-[max(24px,env(safe-area-inset-bottom))]">
+        <span className="mx-auto mb-2 h-1.5 w-10 rounded-full bg-surface-strong" />
         {children}
       </div>
     </div>
@@ -346,12 +347,12 @@ export function PickerSheet({ open, title, options, value, onPick, onClose }: {
 }) {
   return (
     <BottomSheet open={open} onClose={onClose}>
-      <h2 className="mb-1 text-lg font-bold">{title}</h2>
+      <h2 className="mb-1 text-[20px] font-bold tracking-[-0.02em]">{title}</h2>
       <div className="max-h-[360px] overflow-y-auto">
         {options.map((o) => (
-          <button key={o} onClick={() => { onPick(o); onClose(); }} className="flex h-12 w-full items-center justify-between border-b border-line text-left">
-            <span className={cx('text-sm', o === value && 'font-bold')}>{o}</span>
-            {o === value && <Check size={18} />}
+          <button key={o} onClick={() => { onPick(o); onClose(); }} className="pressable pressable-soft flex h-14 w-full items-center justify-between rounded-xl px-2 text-left active:bg-surface">
+            <span className={cx('text-[16px]', o === value && 'font-bold')}>{o}</span>
+            {o === value && <Check size={20} className="animate-pop" />}
           </button>
         ))}
       </div>
@@ -363,7 +364,7 @@ export function Toast({ message }: { message?: string }) {
   if (!message) return null;
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-28 z-[60] mx-auto flex max-w-[390px] justify-center px-6">
-      <div className="animate-fade rounded-full bg-ink/92 px-4 py-2.5 text-center text-[13px] font-medium text-white">{message}</div>
+      <div key={message} className="animate-toast rounded-2xl bg-ink/92 px-5 py-3.5 text-center text-[14px] font-medium text-white shadow-lg backdrop-blur">{message}</div>
     </div>
   );
 }

@@ -26,7 +26,7 @@ export default function Login() {
           <GoogleIcon /> Google로 시작하기
         </Link>
         <Button label="이메일로 로그인" variant="secondary" icon={Mail} href="/login/email" />
-        <Link href="/explore" className="self-center p-3 text-[13px] text-sub underline">로그인 없이 둘러보기</Link>
+        <Link href="/ai" className="self-center p-3 text-[13px] text-sub underline">로그인 없이 둘러보기</Link>
       </div>
     </div>
   );

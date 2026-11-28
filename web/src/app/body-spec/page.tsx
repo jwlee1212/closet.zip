@@ -58,7 +58,7 @@ export default function BodySpecPage() {
       if (save) app.toast('신체 정보를 저장했어요');
       router.back();
     } else {
-      router.replace('/explore');
+      router.replace('/ai');
     }
   };
 

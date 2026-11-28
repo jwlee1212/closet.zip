@@ -4,6 +4,7 @@
 import { useRef, useState } from 'react';
 import { resizeUpload } from '@/lib/resizeUpload';
 import Link from 'next/link';
+import { Plus, Shirt } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { Avatar, Badge, Button, ButtonPair, Chip, Page, Row } from '@/components/ui';
 import { ClothThumb } from '@/components/ClothArt';
@@ -60,12 +61,12 @@ export default function ItemDetail() {
         mine ? (
           <ButtonPair>
             <Button label="옷장에서 빼기" variant="danger" onClick={() => { app.removeItem(item.id); app.toast('옷장에서 뺐어요'); router.back(); }} />
-            <Button label="마네킹에 입혀보기" variant="accent" pro={!app.subscribed} onClick={tryOn} />
+            <Button label="입혀보기" icon={Shirt} variant="accent" pro={!app.subscribed} onClick={tryOn} />
           </ButtonPair>
         ) : (
           <ButtonPair>
-            <Button label="내 옷장에 담기" variant="outline" onClick={keep} />
-            <Button label="아바타에 입혀보기" variant="accent" pro={!app.subscribed} onClick={tryOn} />
+            <Button label="옷장에 담기" icon={Plus} variant="outline" onClick={keep} />
+            <Button label="입혀보기" icon={Shirt} variant="accent" pro={!app.subscribed} onClick={tryOn} />
           </ButtonPair>
         )
       }

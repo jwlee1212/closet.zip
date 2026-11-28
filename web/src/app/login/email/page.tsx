@@ -39,7 +39,7 @@ export default function EmailLogin() {
       app.login({ name: displayName, email, provider: 'email' });
       setPassword('');
       app.toast(mode === 'signup' ? '가입을 완료했어요' : '로그인했어요');
-      router.replace(app.onboarded && mode === 'login' ? '/explore' : '/onboarding');
+      router.replace(app.onboarded && mode === 'login' ? '/ai' : '/onboarding');
     }, 700);
   };
 

@@ -1,4 +1,4 @@
-// AI 코디 추천 API — 내 옷장 목록 + 추구미 + 계절 → 오늘의 코디
+// AI 코디 추천 API — 내 옷장 목록 + 오늘 날씨 + 상황 + 추구미 → 오늘의 코디
 import { isAiConfigured, rateLimited, toAiError } from '@/server/openai';
 import { recommendOutfit, ruleRecommend, type RecItem, type RecommendInput } from '@/server/recommend';
 
@@ -26,12 +26,20 @@ export async function POST(request: Request) {
   if (!items.length) return Response.json({ error: '옷장에 옷이 없어요' }, { status: 400 });
 
   const month = Number(body.month);
+  const w = (body.weather ?? null) as Record<string, unknown> | null;
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : undefined);
+  const weather = w && num(w.temp) !== undefined
+    ? { temp: num(w.temp)!, feels: num(w.feels) ?? num(w.temp)!, min: num(w.min) ?? num(w.temp)!, max: num(w.max) ?? num(w.temp)!, rainChance: num(w.rainChance) ?? 0, condition: str(w.condition, 12) ?? '' }
+    : undefined;
   const input: RecommendInput = {
     items,
     styles: strs(body.styles),
     interests: strs(body.interests),
     fit: str(body.fit),
     month: month >= 1 && month <= 12 ? month : new Date().getMonth() + 1,
+    weather,
+    occasion: str(body.occasion, 12),
+    avoid: strs(body.avoid),
   };
 
   if (!isAiConfigured()) return Response.json(ruleRecommend(input));

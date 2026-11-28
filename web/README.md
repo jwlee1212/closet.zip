@@ -20,7 +20,7 @@ cp .env.example .env.local   # OPENAI_API_KEY= 에 키 입력 후 dev 서버 재
 |---|---|---|---|---|
 | 옷 사진 분석 | 08 → 09 | `/api/analyze` | `gpt-6.2-sol` | 약 $0.005 |
 | 상품 사진 생성 (분석 직후) | 09 | `/api/analyze` | `gpt-image-2.6-flare` | 약 $0.05 (medium) |
-| 오늘의 코디 추천 | 14 | `/api/recommend` | `gpt-6.2-sol` | 약 $0.005 |
+| **오늘의 코디 추천 (핵심)** — 내 옷장 + 오늘 날씨 + 상황(출근·데이트 등) | 14 | `/api/recommend` + `/api/weather` | `gpt-6.2-sol` · 날씨는 [Open-Meteo](https://open-meteo.com)(무료, 키 불필요) | 약 $0.005 |
 | 아바타에게 실제 옷 입히기 | 16 | `/api/tryon` | `gpt-image-2.6-flare` | 약 $0.05 (medium) |
 
 - 키는 [OpenAI Platform](https://platform.openai.com/api-keys)에서 발급합니다. 서버에서만 읽고 브라우저로 보내지 않습니다. 이미지 생성은 OpenAI **조직 인증**이 필요합니다.

@@ -22,7 +22,7 @@ export default function MannequinPage() {
   const router = useRouter();
   const closet = app.findCloset(params.get('closetId') ?? undefined) ?? app.activeCloset;
   // AI 홈의 "오늘의 추천 코디"에서 왔으면 같은 추천 결과로 시작한다
-  const rec = params.get('rec') ? cachedRecommendation({ closet, styles: app.styles, interests: app.interests, body: app.body }) : undefined;
+  const rec = params.get('rec') ? cachedRecommendation(closet.id) : undefined;
   const itemId = params.get('itemId');
   const mine = app.isMine(closet.id);
   const [view, setView] = useState<View>('정면');
@@ -99,7 +99,7 @@ export default function MannequinPage() {
       right={<TextAction label="저장" onClick={save} />}
       footer={
         <ButtonPair>
-          <Button label={mine ? '내 옷장 보기' : '원본 옷장 보기'} variant="outline" href={mine ? '/closet' : `/c/${closet.id}`} />
+          <Button label={mine ? '내 옷장' : '원본 옷장'} variant="outline" href={mine ? '/closet' : `/c/${closet.id}`} />
           <Button label="착장 저장" onClick={save} />
         </ButtonPair>
       }
@@ -143,7 +143,7 @@ export default function MannequinPage() {
         <ChipRow items={['AI 착장', '기본 마네킹']} value={showAi ? 'AI 착장' : '기본 마네킹'} onChange={(v) => setTryOn({ showBasic: v === '기본 마네킹' })} />
       ) : (
         <>
-          <Button label={tryOn.loading ? 'AI가 옷을 입히는 중…' : 'AI로 실제 옷 입혀보기'} icon={Sparkles} variant="accent" pro={!app.subscribed} disabled={tryOn.loading} onClick={dress} />
+          <Button label={tryOn.loading ? 'AI가 입히는 중…' : 'AI로 실제 옷 입혀보기'} icon={Sparkles} variant="accent" pro={!app.subscribed} disabled={tryOn.loading} onClick={dress} />
           <ChipRow items={['정면', '측면', '후면']} value={view} onChange={(v) => setView(v as View)} />
         </>
       )}
@@ -151,6 +151,7 @@ export default function MannequinPage() {
       <Card tone="muted">
         <span className="text-[15px] font-semibold">{isRec && rec?.source === 'openai' ? 'AI 추천 이유' : '추천 이유'}</span>
         <p className="text-sm leading-5">{reason}</p>
+        {isRec && rec?.tip && <p className="text-[13px] font-medium text-sub">💡 {rec.tip}</p>}
       </Card>
 
       {sizes.length > 0 ? (
