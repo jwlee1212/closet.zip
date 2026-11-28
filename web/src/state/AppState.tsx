@@ -127,6 +127,30 @@ function useAppStore() {
       }));
       return true;
     },
+    addLook: (closetId: string, photo: string, itemIds: string[]) => {
+      const current = latest.current;
+      const closet = current.myClosets.find(c => c.id === closetId);
+      if (!closet || !photo || !itemIds.length || !itemIds.every(id => closet.items.some(i => i.id === id))) return false;
+      const look = { id: crypto.randomUUID(), photo, itemIds: [...new Set(itemIds)] };
+      const myClosets = current.myClosets.map(c => c === closet ? { ...c, looks: [look, ...(c.looks ?? [])] } : c);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, myClosets })); }
+      catch { return false; }
+      patch({ myClosets });
+      return true;
+    },
+    setWornPhoto: (itemId: string, wornPhoto: string | undefined) => {
+      const current = latest.current;
+      const myClosets = current.myClosets.map(c => ({
+        ...c, items: c.items.map(it => it.id === itemId ? { ...it, wornPhoto } : it),
+      }));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, myClosets }));
+      } catch {
+        return false;
+      }
+      patch({ myClosets });
+      return true;
+    },
     removeItem: (itemId: string) => patch((prev) => ({
       myClosets: prev.myClosets.map((c) => ({ ...c, items: c.items.filter((i) => i.id !== itemId) })),
     })),

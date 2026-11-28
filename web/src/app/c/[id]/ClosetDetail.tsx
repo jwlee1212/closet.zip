@@ -1,5 +1,6 @@
 'use client';
 
+import { ClosetGallery } from '@/components/ClosetGallery';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Avatar, Badge, Button, ButtonPair, ChipRow, InfoBox, ItemGrid, Page, TextAction, typeTone } from '@/components/ui';
@@ -68,8 +69,10 @@ export function ClosetDetail({ id }: { id: string }) {
 
       {closet.type === '브랜드' && <InfoBox>브랜드가 운영하는 옷장이에요. 구매 링크는 제휴 링크일 수 있어요.</InfoBox>}
 
-      <ChipRow items={['전체', ...CATEGORIES]} value={cat} onChange={setCat} />
-      <ItemGrid items={items} />
+      <ClosetGallery key={closet.id} items={closet.items} startWithLooks>
+        <ChipRow items={['전체', ...CATEGORIES]} value={cat} onChange={setCat} />
+        <ItemGrid items={items} />
+      </ClosetGallery>
     </Page>
   );
 }

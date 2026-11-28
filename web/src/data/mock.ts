@@ -49,10 +49,12 @@ export type ClothingItem = {
   fit?: string;
   brand?: string;
   photoUri?: string;
+  wornPhoto?: string;
   coordiCount: number; // 이 옷이 들어간 코디 수
 };
 
 export type Closet = {
+  looks?: { id: string; photo: string; itemIds: string[] }[];
   id: string;
   name: string;
   owner: string; // 표시 이름
@@ -81,10 +83,51 @@ export const garmentPhotos: Record<string, string> = {
   '블랙 와이드 슬랙스': 'slacks', '데님 데님 팬츠': 'jeans',
 };
 
-/** 옷의 실제 사진 경로: 사용자가 올린 사진(data URL) → 카탈로그 사진(/looks) → 없음 */
-export const itemPhotoSrc = (i: Pick<ClothingItem, 'color' | 'photoUri'> & Partial<Pick<ClothingItem, 'kind'>>) => {
-  const catalog = garmentPhotos[`${i.color} ${i.kind}`];
-  return i.photoUri || (catalog ? `/looks/${catalog}.webp` : undefined);
+const productPhotos: Record<string, string> = {
+  '트렌치코트': 'trench',
+  '블레이저': 'blazer',
+  '데님 재킷': 'denim-jacket',
+  '패딩': 'puffer',
+  '가디건': 'cardigan',
+  '바람막이': 'windbreaker',
+  '맨투맨': 'sweatshirt',
+  '셔츠': 'shirt',
+  '니트': 'knit',
+  '반팔 티셔츠': 'tee',
+  '후드티': 'hoodie',
+  '블라우스': 'blouse',
+  '와이드 슬랙스': 'slacks',
+  '치노 팬츠': 'chinos',
+  '데님 팬츠': 'jeans',
+  '카고 팬츠': 'cargo',
+  '롱스커트': 'skirt',
+  '조거 팬츠': 'joggers',
+  '스니커즈': 'sneakers',
+  '로퍼': 'loafers',
+  '부츠': 'boots',
+  '러닝화': 'runners',
+  '메리제인': 'mary-janes',
+  '토트백': 'tote',
+  '볼캡': 'cap',
+  '머플러': 'scarf',
+  '크로스백': 'crossbody',
+};
+
+export function itemPhotoSrc(item: Pick<ClothingItem, 'color' | 'photoUri'> & Partial<Pick<ClothingItem, 'kind' | 'category'>>) {
+  if (item.photoUri) return item.photoUri;
+  const kind = item.kind ?? '';
+  const existing = garmentPhotos[`${item.color} ${kind}`];
+  if (existing) return `/looks/${existing}.webp`;
+  const fallback = KINDS[item.category ?? '상의'][0];
+  const product = productPhotos[kind] ?? productPhotos[fallback];
+  const color = Object.hasOwn(COLOR_HEX, item.color) ? COLOR_HEX[item.color] : COLOR_HEX.그레이;
+  return `/looks/product-${product}-${color.slice(1).toLowerCase()}.webp`;
+}
+
+// 착용샷에 실제로 보이는 아이템 번호만 연결한다.
+const lookbookItems: Record<string, number[]> = {
+  minji: [1, 3, 5], seoyun: [1, 2, 3], hana: [1, 2], moodlab: [1, 2, 3],
+  yujin: [1, 2, 3], trail: [1, 2, 3], soy: [1, 2, 3], dowon: [1, 2, 3],
 };
 
 function build(closetId: string, specs: Spec[], count: number, brand?: string): ClothingItem[] {
@@ -96,6 +139,7 @@ function build(closetId: string, specs: Spec[], count: number, brand?: string): 
     const c = round === 0 ? color : COLORS[(COLORS.indexOf(color) + round * 3) % COLORS.length];
     out.push({
       id: `${closetId}-${n + 1}`,
+      wornPhoto: lookbookItems[closetId]?.includes(n + 1) ? `/looks/worn-${closetId}.webp` : undefined,
       closetId,
       category,
       kind,

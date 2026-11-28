@@ -1,6 +1,7 @@
 'use client';
 // 07 내 옷장 · 10 옷장 가득 참(바텀시트)
 
+import { ClosetGallery } from '@/components/ClosetGallery';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -83,19 +84,21 @@ export default function MyCloset() {
         </div>
       </Card>
 
-      <ChipRow items={['전체', ...CATEGORIES]} value={cat} onChange={setCat} />
+      <ClosetGallery key={closet.id + String(tidy)} items={closet.items} itemsOnly={tidy} ownCloset={closet}>
+        <ChipRow items={['전체', ...CATEGORIES]} value={cat} onChange={setCat} />
 
-      {tidy && <p className="text-[13px] text-sub">정리할 옷을 눌러 옷장에서 빼세요.</p>}
-      <ItemGrid
-        items={items}
-        onPick={tidy ? (it) => { app.removeItem(it.id); app.toast(`${itemName(it)}을(를) 옷장에서 뺐어요`); } : undefined}
-        renderBadge={tidy ? () => (
-          <span className="absolute top-1.5 right-1.5 flex size-[22px] items-center justify-center rounded-full bg-danger text-white"><Minus size={14} /></span>
-        ) : undefined}
-      />
-      {items.length === 0 && (
-        <p className="my-8 text-center text-[13px] text-sub">{used === 0 ? '첫 옷을 올려 옷장을 시작해 보세요' : '이 카테고리에는 옷이 없어요'}</p>
-      )}
+        {tidy && <p className="text-[13px] text-sub">정리할 옷을 눌러 옷장에서 빼세요.</p>}
+        <ItemGrid
+          items={items}
+          onPick={tidy ? (it) => { app.removeItem(it.id); app.toast(`${itemName(it)}을(를) 옷장에서 뺐어요`); } : undefined}
+          renderBadge={tidy ? () => (
+            <span className="absolute top-1.5 right-1.5 flex size-[22px] items-center justify-center rounded-full bg-danger text-white"><Minus size={14} /></span>
+          ) : undefined}
+        />
+        {items.length === 0 && (
+          <p className="my-8 text-center text-[13px] text-sub">{used === 0 ? '첫 옷을 올려 옷장을 시작해 보세요' : '이 카테고리에는 옷이 없어요'}</p>
+        )}
+      </ClosetGallery>
     </Page>
   );
 }

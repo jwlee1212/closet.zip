@@ -1,6 +1,8 @@
 'use client';
 // 06 옷 상세 (다른 사람의 옷) · 내 옷이면 관리용 버튼
 
+import { useRef, useState } from 'react';
+import { resizeUpload } from '@/lib/resizeUpload';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Avatar, Badge, Button, ButtonPair, Chip, Page, Row } from '@/components/ui';
@@ -12,10 +14,26 @@ export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
   const app = useApp();
   const router = useRouter();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
   const found = app.findItem(id);
   if (!found) return <Page title="옷 상세"><p className="text-sm">옷을 찾을 수 없어요</p></Page>;
   const { item, closet } = found;
   const mine = app.isMine(closet.id);
+
+  const upload = async (file?: File) => {
+    if (!file || !mine) return;
+    setSaving(true);
+    try {
+      const uri = await resizeUpload(file, 800);
+      if (app.setWornPhoto(item.id, uri)) app.toast('착용샷을 저장했어요');
+      else app.toast('저장 공간이 부족해요. 더 작은 사진으로 시도해 주세요');
+    } catch {
+      app.toast('사진을 읽지 못했어요. 다른 파일을 선택해 주세요');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const tryOn = () => {
     if (!app.subscribed) return router.push('/subscribe');
@@ -60,6 +78,27 @@ export default function ItemDetail() {
         </div>
       </div>
 
+      {(mine || item.wornPhoto) && (
+        <section className="flex flex-col gap-2.5" aria-label="착용샷">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">착용샷</h3>
+            {mine && <button type="button" disabled={saving} className="text-sm font-semibold text-accent" onClick={() => fileInput.current?.click()}>
+              {saving ? '저장 중…' : item.wornPhoto ? '사진 교체' : '사진 추가'}
+            </button>}
+          </div>
+          {mine && item.wornPhoto && <button type="button" disabled={saving} className="self-end text-xs text-sub underline" onClick={() => {
+            if (app.setWornPhoto(item.id, undefined)) app.toast('착용샷을 삭제했어요');
+            else app.toast('착용샷을 삭제하지 못했어요');
+          }}>착용샷 삭제</button>}
+          {mine && <input ref={fileInput} type="file" accept="image/*" aria-label="착용샷 파일" hidden onChange={e => {
+            const file = e.target.files?.[0]; e.target.value = ''; void upload(file);
+          }} />}
+          {item.wornPhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element -- 사용자 사진 또는 로컬 룩북
+            <img src={item.wornPhoto} alt={`${itemName(item)} 착용샷`} className="max-h-[460px] w-full rounded-xl bg-surface object-contain" />
+          ) : <p className="rounded-xl bg-surface p-4 text-sm text-sub">이 옷을 입은 사진을 추가해 보세요.</p>}
+        </section>
+      )}
       {!mine && (
         <Link href={`/c/${closet.id}`} className="flex items-center gap-2.5">
           <Avatar size={28} />

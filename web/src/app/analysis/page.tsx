@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Badge, Button, InfoBox, Page, PickerSheet, Row, TextAction } from '@/components/ui';
-import { ClothGlyph } from '@/components/ClothArt';
+import { ClothThumb } from '@/components/ClothArt';
 import { CATEGORIES, COLORS, Category, KINDS, MATERIALS, SEASONS, itemName } from '@/data/mock';
 import { useApp } from '@/state/AppState';
 import type { AnalyzeResult } from '@/server/analyze';
@@ -142,7 +142,7 @@ export default function Analysis() {
           {photo
             // eslint-disable-next-line @next/next/no-img-element -- 업로드 사진(data URL)
             ? <img src={photo} alt={generated && !useOriginal ? "AI가 생성한 상품 사진" : "원본 사진"} className="absolute inset-0 h-full w-full object-contain" />
-            : <ClothGlyph category={attr.category} color={attr.color} size={100} />}
+            : <ClothThumb item={attr} height={200} className="w-full" />}
         </div>
         <div className="flex flex-col gap-2">
           {meta?.source === 'openai'

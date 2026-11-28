@@ -291,6 +291,7 @@ export function ItemGrid({ items, hrefFor, onPick, renderBadge }: {
           <>
             <ClothThumb item={it} height={120} />
             {renderBadge?.(it)}
+            {it.wornPhoto && <span className="absolute left-1.5 top-1.5 rounded bg-ink/80 px-1.5 py-0.5 text-[10px] font-medium text-white">착용샷</span>}
             <span className="mt-1 block truncate text-xs text-sub">{it.category} · {it.color}</span>
           </>
         );
@@ -307,7 +308,7 @@ export function ItemGrid({ items, hrefFor, onPick, renderBadge }: {
 export function ClosetCard({ closet, href, liked, onLike }: { closet: Closet; href: string; liked?: boolean; onLike?: () => void }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <Link href={href} className="transition active:opacity-85"><ClosetCover items={closet.items} /></Link>
+      <Link href={href} className="transition active:opacity-85"><ClosetCover items={closet.items} height={260} /></Link>
       <div className="flex items-center gap-2.5">
         <Avatar size={28} />
         <Link href={href} className="min-w-0 flex-1">

@@ -5,26 +5,10 @@ import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, Images, Lightbulb, Sparkles } from 'lucide-react';
 import { Button, ButtonPair, InfoBox, Page, ProgressBar } from '@/components/ui';
-import { ClothGlyph } from '@/components/ClothArt';
+import { ClothThumb } from '@/components/ClothArt';
 import { useApp } from '@/state/AppState';
 
-/** 업로드 사진을 긴 변 480px JPEG로 줄인다 (localStorage·API 전송 용량 절약) */
-async function shrink(file: File, max = 480): Promise<string> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = new Image();
-    img.src = url;
-    await img.decode();
-    const scale = Math.min(1, max / Math.max(img.width, img.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
-    canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.8);
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
+import { resizeUpload } from '@/lib/resizeUpload';
 
 export default function Upload() {
   const app = useApp();
@@ -40,7 +24,7 @@ export default function Upload() {
     e.target.value = '';
     if (!f) return;
     try {
-      app.setPending({ photoUri: await shrink(f) });
+      app.setPending({ photoUri: await resizeUpload(f) });
     } catch {
       app.toast('이미지를 읽지 못했어요. 다른 사진으로 시도해 주세요');
     }
@@ -56,7 +40,7 @@ export default function Upload() {
           // eslint-disable-next-line @next/next/no-img-element -- 업로드 미리보기(data URL)
           <img src={pending.photoUri} alt="올릴 옷 사진" className="absolute inset-0 h-full w-full object-cover" />
         ) : pending?.sample ? (
-          <ClothGlyph category="상의" color="네이비" size={200} />
+          <ClothThumb item={{category: "상의", kind: "맨투맨", color: "네이비"}} height={240} className="w-full" />
         ) : (
           <div className="flex flex-col items-center gap-2 text-center">
             <Camera size={36} className="text-muted" />
