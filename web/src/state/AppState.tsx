@@ -3,7 +3,7 @@
 import { createContext, use, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { browser } from 'react-dom';
 import {
-  BodySpec, Category, Closet, ClosetType, ClothingItem, PUBLIC_CLOSETS, Style, Visibility, createMyFirstCloset,
+  BodySpec, Category, Closet, ClosetType, ClothingItem, FREE_CAPACITY, PUBLIC_CLOSETS, Style, Visibility, createMyFirstCloset,
 } from '@/data/mock';
 
 export type Outfit = { id: string; top?: string; bottom?: string; shoes?: string; outer?: string; sourceClosetId: string; /** AI 착장 이미지 (480px WebP) */ image?: string };
@@ -31,7 +31,8 @@ type State = {
   pending?: PendingUpload;
 };
 
-const STORAGE_KEY = 'closet-demo-v1';
+// v2: 무료 옷장 한도 30 → 20벌(보고서 수정본). 버전을 올려 예전 데모 상태 대신 새 기본값으로 시작한다
+const STORAGE_KEY = 'closet-demo-v2';
 
 const initial = (): State => {
   const first = createMyFirstCloset();
@@ -161,7 +162,7 @@ function useAppStore() {
       const id = `my-${Date.now()}`;
       patch((prev) => ({
         myClosets: [...prev.myClosets, {
-          id, name, theme, type, owner: '이재우', handle: 'jaewoo', capacity: 30,
+          id, name, theme, type, owner: '이재우', handle: 'jaewoo', capacity: FREE_CAPACITY,
           likes: 0, followers: 0, views: 0, linkClicks: 0, visibility: '비공개' as Visibility,
           summary: '', tags: [], updatedRank: 0, items: [],
         }],

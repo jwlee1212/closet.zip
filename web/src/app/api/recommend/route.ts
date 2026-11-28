@@ -1,6 +1,6 @@
 // AI 코디 추천 API — 내 옷장 목록 + 오늘 날씨 + 상황 + 추구미 → 오늘의 코디
 import { isAiConfigured, rateLimited, toAiError } from '@/server/openai';
-import { recommendOutfit, ruleRecommend, type RecItem, type RecommendInput } from '@/server/recommend';
+import { recommendOutfit, ruleRecommend, type RecItem, type RecommendInput, type RefCloset } from '@/server/recommend';
 
 export type { Recommendation } from '@/server/recommend';
 
@@ -31,6 +31,17 @@ export async function POST(request: Request) {
   const weather = w && num(w.temp) !== undefined
     ? { temp: num(w.temp)!, feels: num(w.feels) ?? num(w.temp)!, min: num(w.min) ?? num(w.temp)!, max: num(w.max) ?? num(w.temp)!, rainChance: num(w.rainChance) ?? 0, condition: str(w.condition, 12) ?? '' }
     : undefined;
+  const refRaw = (body.reference ?? null) as Record<string, unknown> | null;
+  const refItem = (i: Record<string, unknown>) => ({ category: str(i?.category) ?? '', kind: str(i?.kind) ?? '', color: str(i?.color) ?? '', material: str(i?.material) });
+  const reference: RefCloset | undefined = refRaw && str(refRaw.name)
+    ? {
+        name: str(refRaw.name)!,
+        theme: str(refRaw.theme) ?? '',
+        summary: str(refRaw.summary, 200),
+        items: (Array.isArray(refRaw.items) ? refRaw.items : []).slice(0, 40).map(refItem).filter((i) => i.category),
+        focus: refRaw.focus && typeof refRaw.focus === 'object' ? refItem(refRaw.focus as Record<string, unknown>) : undefined,
+      }
+    : undefined;
   const input: RecommendInput = {
     items,
     styles: strs(body.styles),
@@ -40,6 +51,7 @@ export async function POST(request: Request) {
     weather,
     occasion: str(body.occasion, 12),
     avoid: strs(body.avoid),
+    reference,
   };
 
   if (!isAiConfigured()) return Response.json(ruleRecommend(input));

@@ -37,10 +37,10 @@ export function ClosetDetail({ id }: { id: string }) {
       right={<TextAction label="공유" onClick={share} />}
       footer={
         <Button
-          label="아바타로 미리보기"
+          label={app.isMine(closet.id) ? "아바타로 미리보기" : "내 옷으로 따라 입기"}
           variant="accent"
           pro={!app.subscribed}
-          onClick={() => pro(() => { app.bumpUsage('mannequin'); router.push(`/mannequin?closetId=${closet.id}`); })}
+          onClick={() => pro(() => { app.bumpUsage('mannequin'); router.push(app.isMine(closet.id) ? `/mannequin?closetId=${closet.id}` : `/mannequin?ref=${closet.id}`); })}
         />
       }
     >

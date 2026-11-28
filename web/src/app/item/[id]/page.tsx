@@ -39,7 +39,8 @@ export default function ItemDetail() {
   const tryOn = () => {
     if (!app.subscribed) return router.push('/subscribe');
     app.bumpUsage('mannequin');
-    router.push(`/mannequin?closetId=${closet.id}&itemId=${item.id}`);
+    // 내 옷이면 그 옷으로 바로, 남의 옷이면 그 느낌을 살린 "내 옷" 코디로 (가진 옷만으로 추천)
+    router.push(mine ? `/mannequin?closetId=${closet.id}&itemId=${item.id}` : `/mannequin?ref=${closet.id}&focus=${item.id}`);
   };
 
   const keep = () => {

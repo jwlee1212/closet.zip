@@ -168,17 +168,22 @@ const MINIMAL: Spec[] = [
   ['상의', '반팔 티셔츠', '그레이', '코튼', '여름'],
 ];
 
+/** 무료 옷장 등록 한도 — 보고서: 20벌이면 일주일 동안 같은 상의를 반복하지 않는 코디 7벌 구성 가능 */
+export const FREE_CAPACITY = 20;
+/** 유료 '옷 용량 확장' 1회에 늘어나는 수 */
+export const CAPACITY_STEP = 20;
+
 export const PUBLIC_CLOSETS: Closet[] = [
   {
     id: 'minji', name: '@minji의 옷장', owner: '@minji', handle: 'minji', type: '인플루언서', theme: '미니멀',
-    capacity: 30, likes: 128, followers: 1200, views: 5100, linkClicks: 210, visibility: '전체 공개',
+    capacity: CAPACITY_STEP + FREE_CAPACITY, likes: 128, followers: 1200, views: 5100, linkClicks: 210, visibility: '전체 공개',
     summary: '뉴트럴 톤 상의와 와이드 하의를 기본으로, 오버핏 실루엣을 자주 써요. 출근·데일리 모두 무리 없는 구성이에요.',
     tags: ['뉴트럴 톤', '오버핏', '데일리'], updatedRank: 2,
     items: build('minji', MINIMAL, 24),
   },
   {
     id: 'seoyun', name: '한서윤 (모델) 옷장', owner: '한서윤', handle: 'seoyun.model', type: '브랜드', theme: '클래식',
-    capacity: 30, likes: 2400, followers: 18000, views: 42000, linkClicks: 3100, visibility: '전체 공개',
+    capacity: CAPACITY_STEP + FREE_CAPACITY, likes: 2400, followers: 18000, views: 42000, linkClicks: 3100, visibility: '전체 공개',
     summary: '테일러드 블레이저와 슬랙스 중심의 클래식 셋업이 많아요. 블랙·네이비·크림 3색 안에서 조합해요.',
     tags: ['테일러드', '셋업', '모노톤'], updatedRank: 4,
     items: build('seoyun', [
@@ -194,7 +199,7 @@ export const PUBLIC_CLOSETS: Closet[] = [
   },
   {
     id: 'hana', name: '@hana의 옷장', owner: '@hana', handle: 'hana', type: '일반', theme: '미니멀',
-    capacity: 30, likes: 96, followers: 340, views: 1800, linkClicks: 12, visibility: '전체 공개',
+    capacity: FREE_CAPACITY, likes: 96, followers: 340, views: 1800, linkClicks: 12, visibility: '전체 공개',
     summary: '화이트·그레이 베이스에 데님으로 포인트를 줘요. 셔츠 레이어드가 많고 신발은 스니커즈 위주예요.',
     tags: ['화이트 베이스', '레이어드', '데님'], updatedRank: 1,
     items: build('hana', [
@@ -208,7 +213,7 @@ export const PUBLIC_CLOSETS: Closet[] = [
   },
   {
     id: 'moodlab', name: '무드랩 스튜디오', owner: '무드랩', handle: 'moodlab', type: '브랜드', theme: '스트릿',
-    capacity: 30, likes: 1300, followers: 9400, views: 21000, linkClicks: 1900, visibility: '전체 공개',
+    capacity: CAPACITY_STEP + FREE_CAPACITY, likes: 1300, followers: 9400, views: 21000, linkClicks: 1900, visibility: '전체 공개',
     summary: '빅사이즈 후드와 카고 팬츠, 볼캡 조합이 대표 착장이에요. 블랙·카키·오렌지 포인트 컬러를 써요.',
     tags: ['빅사이즈', '카고', '포인트 컬러'], updatedRank: 3,
     items: build('moodlab', [
@@ -222,7 +227,7 @@ export const PUBLIC_CLOSETS: Closet[] = [
   },
   {
     id: 'yujin', name: '@yujin의 옷장', owner: '@yujin', handle: 'yujin', type: '일반', theme: '빈티지',
-    capacity: 30, likes: 210, followers: 520, views: 2600, linkClicks: 40, visibility: '전체 공개',
+    capacity: FREE_CAPACITY, likes: 210, followers: 520, views: 2600, linkClicks: 40, visibility: '전체 공개',
     summary: '브라운·버건디 계열 니트와 워싱 데님이 중심이에요. 레더 부츠로 마무리하는 착장이 많아요.',
     tags: ['어스 톤', '워싱 데님', '레더'], updatedRank: 5,
     items: build('yujin', [
@@ -235,7 +240,7 @@ export const PUBLIC_CLOSETS: Closet[] = [
   },
   {
     id: 'trail', name: '@trail_kim의 옷장', owner: '@trail_kim', handle: 'trail_kim', type: '인플루언서', theme: '고프코어',
-    capacity: 30, likes: 640, followers: 4100, views: 9800, linkClicks: 380, visibility: '전체 공개',
+    capacity: CAPACITY_STEP + FREE_CAPACITY, likes: 640, followers: 4100, views: 9800, linkClicks: 380, visibility: '전체 공개',
     summary: '기능성 바람막이와 카고 팬츠, 러닝화가 기본이에요. 올리브·블랙 톤으로 아웃도어 무드를 내요.',
     tags: ['기능성', '아웃도어', '레이어드'], updatedRank: 6,
     items: build('trail', [
@@ -248,7 +253,7 @@ export const PUBLIC_CLOSETS: Closet[] = [
   },
   {
     id: 'soy', name: '@soy의 옷장', owner: '@soy', handle: 'soy', type: '일반', theme: '러블리',
-    capacity: 30, likes: 180, followers: 410, views: 2100, linkClicks: 20, visibility: '전체 공개',
+    capacity: FREE_CAPACITY, likes: 180, followers: 410, views: 2100, linkClicks: 20, visibility: '전체 공개',
     summary: '핑크·크림 파스텔 톤 블라우스와 롱스커트가 많아요. 메리제인 슈즈로 포인트를 줘요.',
     tags: ['파스텔', '롱스커트', '블라우스'], updatedRank: 7,
     items: build('soy', [
@@ -260,7 +265,7 @@ export const PUBLIC_CLOSETS: Closet[] = [
   },
   {
     id: 'dowon', name: '@dowon의 옷장', owner: '@dowon', handle: 'dowon', type: '일반', theme: '모던 캐주얼',
-    capacity: 30, likes: 150, followers: 290, views: 1500, linkClicks: 15, visibility: '전체 공개',
+    capacity: FREE_CAPACITY, likes: 150, followers: 290, views: 1500, linkClicks: 15, visibility: '전체 공개',
     summary: '셔츠·니트에 치노 팬츠를 매치하는 단정한 캐주얼이에요. 네이비와 베이지를 가장 많이 써요.',
     tags: ['단정함', '치노', '네이비'], updatedRank: 8,
     items: build('dowon', [
@@ -269,16 +274,16 @@ export const PUBLIC_CLOSETS: Closet[] = [
       ['신발', '로퍼', '브라운', '레더', '사계절'],
       ['상의', '니트', '그레이', '울', '겨울'],
       ['아우터', '블레이저', '차콜', '울', '가을'],
-    ], 22),
+    ], 20),
   },
 ];
 
 export function createMyFirstCloset(): Closet {
   return {
     id: 'my-1', name: '미니멀 옷장', owner: '이재우', handle: 'jaewoo', type: '일반', theme: '미니멀',
-    capacity: 30, likes: 0, followers: 0, views: 0, linkClicks: 0, visibility: '비공개',
+    capacity: FREE_CAPACITY, likes: 0, followers: 0, views: 0, linkClicks: 0, visibility: '비공개',
     summary: '', tags: [], updatedRank: 0,
-    items: build('my-1', MINIMAL, 22),
+    items: build('my-1', MINIMAL, 18),
   };
 }
 
@@ -286,7 +291,7 @@ export function createMyFirstCloset(): Closet {
 export const PRICES = {
   subscription: 4900,
   closetPlusOne: 1900,
-  capacityPlus30: 2900,
+  capacityPlus20: 2900,
   businessPackage: 19900,
 };
 export const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;

@@ -9,7 +9,7 @@ import { LayoutGrid, Minus } from 'lucide-react';
 import {
   Badge, BottomSheet, Button, ButtonPair, Card, Chip, ChipRow, ItemGrid, Page, ProgressBar, TextAction, typeTone,
 } from '@/components/ui';
-import { CATEGORIES, itemName } from '@/data/mock';
+import { CATEGORIES, FREE_CAPACITY, itemName } from '@/data/mock';
 import { useApp } from '@/state/AppState';
 
 export default function MyCloset() {
@@ -45,7 +45,7 @@ export default function MyCloset() {
         <BottomSheet open={sheet} onClose={() => setSheet(false)}>
           <h2 className="text-lg font-bold">옷장이 가득 찼어요 ({used}/{closet.capacity})</h2>
           <p className="text-[13px] leading-5 text-sub">
-            무료 옷장에는 옷을 {closet.capacity}벌까지 올릴 수 있어요. 옷장을 추가하면 새 테마로 30벌을 더 올릴 수 있어요.
+            무료 옷장에는 옷을 {closet.capacity}벌까지 올릴 수 있어요. 옷장을 추가하면 새 테마로 {FREE_CAPACITY}벌을 더 올릴 수 있어요.
           </p>
           <Button label="옷장 늘리기" href="/expand" />
           <Button label="옷 정리하기" variant="outline" onClick={() => { setSheet(false); setTidy(true); }} />

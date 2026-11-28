@@ -61,7 +61,7 @@ export default function AiHome() {
 
   // 핵심 기능: 내 옷장 + 날씨 + 상황 → 오늘의 코디 (/api/recommend). 날씨 응답을 기다렸다가 한 번만 요청한다
   const closet = app.activeCloset;
-  const { rec, loading, error, another } = useRecommendation(
+  const { rec, loading, error, another, rerollsLeft } = useRecommendation(
     { closet, styles: app.styles, interests: app.interests, body: app.body, occasion, weather },
     app.subscribed && ready,
   );
@@ -175,8 +175,12 @@ export default function AiHome() {
           {rec.tip && <InfoBox icon={weather && weather.rainChance >= 50 ? Umbrella : Sparkles}>{rec.tip}</InfoBox>}
           <div className="flex flex-col items-center gap-1">
             <Button label="아바타로 입혀보기" icon={Shirt} href={`/mannequin?closetId=${closet.id}&rec=1`} />
-            <button onClick={another} className="pressable flex items-center gap-1.5 rounded-full px-3 py-2.5 text-[14px] font-semibold text-sub active:bg-surface">
-              <RefreshCw size={15} />다른 코디 추천받기
+            <button
+              onClick={() => { if (!another()) app.toast('오늘 다시 추천받기를 모두 썼어요. 내일 다시 이용해 주세요'); }}
+              disabled={rerollsLeft === 0}
+              className="pressable flex items-center gap-1.5 rounded-full px-3 py-2.5 text-[14px] font-semibold text-sub active:bg-surface disabled:opacity-40"
+            >
+              <RefreshCw size={15} />다른 코디 추천받기 <span className="font-medium text-muted">· 오늘 {rerollsLeft}회 남음</span>
             </button>
           </div>
         </div>

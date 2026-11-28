@@ -1,16 +1,17 @@
 'use client';
 // 16 마네킹(아바타) 미리보기 — 추천 착장 · 아이템 교체 · 추천 이유 · 원본 옷장
+// ?ref=<다른 사람 옷장> 으로 오면 그 옷장의 스타일을 "내 옷장"의 옷으로 재현한 코디를 보여 준다 (보고서 2-3)
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Sparkles } from 'lucide-react';
+import { ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import { Avatar, Button, ButtonPair, Card, ChipRow, Page, TextAction } from '@/components/ui';
 import { ClothThumb } from '@/components/ClothArt';
 import { Mannequin } from '@/components/Mannequin';
 import { Category, ClothingItem, itemName, itemPhotoSrc, recommendSize } from '@/data/mock';
 import { useApp } from '@/state/AppState';
-import { cachedRecommendation, cachedTryOn, requestTryOn, type TryOnPart } from '@/lib/ai';
+import { cachedRecommendation, cachedTryOn, requestTryOn, useRecommendation, useWeather, type TryOnPart } from '@/lib/ai';
 
 type Slot = '아우터' | '상의' | '하의' | '신발';
 const SLOTS: Slot[] = ['아우터', '상의', '하의', '신발'];
@@ -20,9 +21,18 @@ export default function MannequinPage() {
   const params = useSearchParams();
   const app = useApp();
   const router = useRouter();
-  const closet = app.findCloset(params.get('closetId') ?? undefined) ?? app.activeCloset;
+  // 참고 모드: 다른 사람의 옷장(ref)을 참고하되, 코디는 내 옷장(활성 옷장)의 옷으로만 구성한다
+  const refCloset = params.get('ref') ? app.findCloset(params.get('ref')!) : undefined;
+  const refMode = !!refCloset && !app.isMine(refCloset.id);
+  const focusId = params.get('focus') ?? undefined;
+  const closet = refMode ? app.activeCloset : app.findCloset(params.get('closetId') ?? undefined) ?? app.activeCloset;
+  const { weather, ready } = useWeather();
+  const refRec = useRecommendation(
+    { closet, styles: app.styles, interests: app.interests, body: app.body, occasion: '데일리', weather, reference: refCloset, focusId },
+    refMode && app.subscribed && ready && closet.items.length > 0,
+  );
   // AI 홈의 "오늘의 추천 코디"에서 왔으면 같은 추천 결과로 시작한다
-  const rec = params.get('rec') ? cachedRecommendation(closet.id) : undefined;
+  const rec = refMode ? refRec.rec : params.get('rec') ? cachedRecommendation(closet.id) : undefined;
   const itemId = params.get('itemId');
   const mine = app.isMine(closet.id);
   const [view, setView] = useState<View>('정면');
@@ -33,21 +43,27 @@ export default function MannequinPage() {
     return p;
   }, [closet]);
 
-  const [pick, setPick] = useState<Record<Slot, number>>(() => {
+  const fromRec = (r: NonNullable<typeof rec>, base: Record<Slot, number>) => {
+    const out = { ...base };
+    const recIds: Record<Slot, string | undefined> = { 아우터: r.outerId, 상의: r.topId, 하의: r.bottomId, 신발: r.shoesId };
+    for (const s of SLOTS) {
+      const idx = pool[s].findIndex((i) => i.id === recIds[s]);
+      if (idx >= 0 || s === '아우터') out[s] = idx;
+    }
+    return out;
+  };
+  const [initPick] = useState<Record<Slot, number>>(() => {
     const init: Record<Slot, number> = { 아우터: -1, 상의: 0, 하의: 0, 신발: 0 };
     const target = itemId ? closet.items.find((i) => i.id === itemId) : undefined;
     if (target && (SLOTS as Category[]).includes(target.category)) {
       init[target.category as Slot] = pool[target.category as Slot].findIndex((i) => i.id === target.id);
     }
-    if (rec) {
-      const recIds: Record<Slot, string | undefined> = { 아우터: rec.outerId, 상의: rec.topId, 하의: rec.bottomId, 신발: rec.shoesId };
-      for (const s of SLOTS) {
-        const idx = pool[s].findIndex((i) => i.id === recIds[s]);
-        if (idx >= 0 || s === '아우터') init[s] = idx;
-      }
-    }
-    return init;
+    return rec && !refMode ? fromRec(rec, init) : init;
   });
+  // 사용자가 직접 교체하기 전에는 (참고 모드의) AI 추천 결과를 그대로 보여 준다
+  const [manual, setManual] = useState<Record<Slot, number> | null>(null);
+  const pick = manual ?? (refMode && rec ? fromRec(rec, initPick) : initPick);
+  const setPick = setManual;
 
   const cur = (s: Slot) => (pick[s] >= 0 ? pool[s][pick[s]] : undefined);
   const swap = (s: Slot) => {
@@ -89,6 +105,7 @@ export default function MannequinPage() {
   });
   const reason = isRec ? rec!.reason : ruleReason;
   const save = () => {
+    if (refMode && !closet.items.length) return app.toast('내 옷장에 옷을 먼저 올려 주세요');
     app.saveOutfit({ top: top?.id, bottom: bottom?.id, shoes: shoes?.id, outer: outer?.id, sourceClosetId: closet.id, image: aiImage });
     app.toast('저장한 착장에 추가했어요');
   };
@@ -99,11 +116,34 @@ export default function MannequinPage() {
       right={<TextAction label="저장" onClick={save} />}
       footer={
         <ButtonPair>
-          <Button label={mine ? '내 옷장' : '원본 옷장'} variant="outline" href={mine ? '/closet' : `/c/${closet.id}`} />
+          <Button label={refMode || !mine ? '원본 옷장' : '내 옷장'} variant="outline" href={refMode ? `/c/${refCloset!.id}` : mine ? '/closet' : `/c/${closet.id}`} />
           <Button label="착장 저장" onClick={save} />
         </ButtonPair>
       }
     >
+      {refMode && (
+        <Link href={`/c/${refCloset!.id}`} className="pressable pressable-soft flex items-center gap-3 rounded-[20px] bg-accent-soft p-4">
+          <Avatar size={36} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] text-sub">참고한 옷장 · {refCloset!.theme}</span>
+            <span className="block truncate text-[15px] font-bold">{refCloset!.name} 스타일을 내 옷으로</span>
+          </span>
+          <ChevronRight size={18} className="text-muted" />
+        </Link>
+      )}
+      {refMode && !app.subscribed && (
+        <Card>
+          <p className="text-[15px] font-semibold">구독하면 이 옷장의 스타일을 내 옷으로 맞춰 드려요</p>
+          <Button label="AI 추천 구독 알아보기" href="/subscribe" />
+        </Card>
+      )}
+      {refMode && !closet.items.length ? (
+        <Card>
+          <p className="text-[15px] font-semibold">내 옷장이 비어 있어요</p>
+          <p className="text-[14px] text-sub">옷을 올리면 {refCloset!.name}의 스타일을 내가 가진 옷으로 맞춰 드려요.</p>
+          <Button label="옷 올리기" href="/upload" />
+        </Card>
+      ) : (
       <div className="flex gap-3">
         <div className="relative flex h-[330px] w-[170px] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface">
           {showAi ? (
@@ -111,6 +151,12 @@ export default function MannequinPage() {
             <img src={aiImage} alt="AI가 옷을 입힌 아바타" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <Mannequin top={top?.color} bottom={bottom?.color} shoes={shoes?.color} outer={outer?.color} view={view} height={300} body={app.body} />
+          )}
+          {refMode && refRec.loading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface/85 px-3 text-center backdrop-blur-[2px]">
+              <Sparkles size={26} className="animate-pulse text-accent" />
+              <span className="text-xs font-semibold">AI가 이 스타일에 맞는 내 옷을 고르는 중</span>
+            </div>
           )}
           {tryOn.loading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface/80 px-3 text-center backdrop-blur-[2px]">
@@ -135,9 +181,10 @@ export default function MannequinPage() {
               </button>
             );
           })}
-          <span className="flex items-center gap-1.5 text-xs text-muted"><Avatar size={20} /><span className="truncate">출처: {closet.name}</span></span>
+          <span className="flex items-center gap-1.5 text-xs text-muted"><Avatar size={20} /><span className="truncate">{refMode ? `내 옷: ${closet.name}` : `출처: ${closet.name}`}</span></span>
         </div>
       </div>
+      )}
 
       {aiImage ? (
         <ChipRow items={['AI 착장', '기본 마네킹']} value={showAi ? 'AI 착장' : '기본 마네킹'} onChange={(v) => setTryOn({ showBasic: v === '기본 마네킹' })} />
@@ -149,7 +196,7 @@ export default function MannequinPage() {
       )}
 
       <Card tone="muted">
-        <span className="text-[15px] font-semibold">{isRec && rec?.source === 'openai' ? 'AI 추천 이유' : '추천 이유'}</span>
+        <span className="text-[15px] font-semibold">{isRec && rec?.source === 'openai' ? 'AI 추천 이유' : '추천 이유'}{isRec && refMode ? ` · ${rec!.basis}` : ''}</span>
         <p className="text-sm leading-5">{reason}</p>
         {isRec && rec?.tip && <p className="text-[13px] font-medium text-sub">💡 {rec.tip}</p>}
       </Card>

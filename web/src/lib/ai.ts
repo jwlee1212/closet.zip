@@ -69,10 +69,23 @@ export function useWeather() {
   return { weather, ready: !!weather || failed, locate };
 }
 
-type RecContext = { closet: Closet; styles: string[]; interests: string[]; body?: BodySpec; occasion: string; weather?: Weather };
+type RecContext = {
+  closet: Closet; styles: string[]; interests: string[]; body?: BodySpec; occasion: string; weather?: Weather;
+  /** 참고할 다른 사람의 옷장 — 그 스타일을 내 옷으로 재현 */
+  reference?: Closet;
+  /** 참고 옷장에서 특히 살릴 아이템 id */
+  focusId?: string;
+};
 
-const recKey = ({ closet, styles, interests, body, occasion, weather }: RecContext, round: number) =>
-  `rec:${closet.id}:${new Date().toDateString()}:${occasion}:${weather ? `${weather.temp}${weather.condition}` : '-'}:${round}:${styles.join(',')}:${interests.join(',')}:${body?.fit ?? ''}:${closet.items.map((i) => i.id).join(',')}`;
+const recKey = ({ closet, styles, interests, body, occasion, weather, reference, focusId }: RecContext, round: number) =>
+  `rec:${closet.id}:${reference ? `ref=${reference.id}/${focusId ?? ''}` : ''}:${new Date().toDateString()}:${occasion}:${weather ? `${weather.temp}${weather.condition}` : '-'}:${round}:${styles.join(',')}:${interests.join(',')}:${body?.fit ?? ''}:${closet.items.map((i) => i.id).join(',')}`;
+
+/** "다시 추천" 하루 횟수 제한 (보고서: 다시 추천은 횟수 제한) — 이 기기 기준 */
+export const REROLL_LIMIT = 5;
+const rerollKey = () => `rerolls:${new Date().toDateString()}`;
+const rerollsUsed = () => {
+  try { return Number(localStorage.getItem(rerollKey()) ?? 0); } catch { return 0; }
+};
 
 /** 마네킹 화면이 이어받을 마지막 추천 */
 export const cachedRecommendation = (closetId: string) => cacheGet<Recommendation>(`rec:last:${closetId}`);
@@ -101,6 +114,13 @@ export function useRecommendation(ctx: RecContext, enabled: boolean) {
         weather: ctx.weather,
         occasion: ctx.occasion,
         avoid: round > 0 ? avoid : [],
+        reference: ctx.reference && {
+          name: ctx.reference.name,
+          theme: ctx.reference.theme,
+          summary: ctx.reference.summary,
+          items: ctx.reference.items.map(({ category, kind, color, material }) => ({ category, kind, color, material })),
+          focus: ctx.focusId ? ctx.reference.items.find((i) => i.id === ctx.focusId) : undefined,
+        },
       }),
       signal: ctrl.signal,
     })
@@ -117,12 +137,23 @@ export function useRecommendation(ctx: RecContext, enabled: boolean) {
   }, [key, enabled]);
 
   const rec = cached ?? (state.key === key ? state.rec : undefined);
-  /** 다른 코디 보기: 지금 추천에 쓴 옷은 피해서 다시 받는다 */
+  const [used, setUsed] = useState(rerollsUsed);
+  /** 다른 코디 보기: 지금 추천에 쓴 옷은 피해서 다시 받는다. 하루 횟수를 넘으면 false */
   const another = () => {
+    if (used >= REROLL_LIMIT) return false;
     if (rec) setAvoid([rec.outerId, rec.topId, rec.bottomId, rec.shoesId].filter((x): x is string => !!x));
+    try { localStorage.setItem(rerollKey(), String(used + 1)); } catch { /* 저장 실패는 무시 */ }
+    setUsed(used + 1);
     setRound((n) => n + 1);
+    return true;
   };
-  return { rec, error: state.key === key ? state.error : undefined, loading: enabled && !rec && !(state.key === key && state.error), another };
+  return {
+    rec,
+    error: state.key === key ? state.error : undefined,
+    loading: enabled && !rec && !(state.key === key && state.error),
+    another,
+    rerollsLeft: Math.max(0, REROLL_LIMIT - used),
+  };
 }
 
 export type TryOnPart = { slot: string; name: string; photo?: string };

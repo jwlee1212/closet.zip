@@ -32,7 +32,7 @@ export default function Summary() {
       footer={
         <ButtonPair>
           <Button label="옷장 보기" variant="outline" href={`/c/${closet.id}`} />
-          <Button label="마네킹에 입혀보기" variant="accent" href={`/mannequin?closetId=${closet.id}`} onClick={() => app.bumpUsage('mannequin')} />
+          <Button label="내 옷으로 입어보기" variant="accent" href={`/mannequin?ref=${closet.id}`} onClick={() => app.bumpUsage('mannequin')} />
         </ButtonPair>
       }
     >

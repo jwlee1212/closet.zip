@@ -18,6 +18,17 @@ export type RecommendInput = {
   occasion?: string;
   /** "다른 코디 보기"로 다시 요청할 때 직전 추천에서 쓴 옷 id (겹치지 않게) */
   avoid?: string[];
+  /** 참고할 다른 사람의 공개 옷장 — 그 스타일을 "내가 가진 옷"으로 재현한다 (보고서 2-3 매칭 전략) */
+  reference?: RefCloset;
+};
+
+export type RefCloset = {
+  name: string;
+  theme: string;
+  summary?: string;
+  items: Pick<RecItem, 'category' | 'kind' | 'color' | 'material'>[];
+  /** 특히 살리고 싶은 아이템 (옷 상세에서 "입혀보기"를 눌렀을 때) */
+  focus?: Pick<RecItem, 'category' | 'kind' | 'color' | 'material'>;
 };
 
 export type Recommendation = {
@@ -53,6 +64,7 @@ const SYSTEM = `당신은 디지털 옷장 앱의 퍼스널 스타일리스트�
 - 상황(TPO)에 맞춥니다: 출근은 단정하게, 데이트는 분위기 있게, 운동은 활동성, 여행은 편안함과 레이어드, 하객은 격식 있게.
 - 사용자의 추구미(스타일)와 선호 핏을 반영하고, 색 조합이 자연스럽게 맞도록 고릅니다.
 - 피해야 할 옷 id가 주어지면 가능한 한 다른 조합을 고릅니다.
+- 참고 옷장이 주어지면, 그 옷장의 색 조합·실루엣·아이템 구성을 사용자가 가진 옷으로 최대한 비슷하게 재현합니다. 참고 옷장의 옷을 추천에 넣지 않습니다(사용자가 갖고 있지 않으므로). 강조 아이템이 있으면 그 느낌에 가장 가까운 내 옷을 중심으로 고르고, 추천 이유에 참고 옷장과 어떤 점이 닮았는지 한 문장으로 밝힙니다.
 - 추천 이유와 팁은 친근한 존댓말로 짧게 씁니다.`;
 
 const SLOT = { 아우터: 'outer', 상의: 'top', 하의: 'bottom', 신발: 'shoes' } as const;
@@ -60,6 +72,7 @@ const SLOT = { 아우터: 'outer', 상의: 'top', 하의: 'bottom', 신발: 'sho
 const basisOf = (input: RecommendInput) => {
   const w = input.weather;
   const when = w ? `${w.temp}°C ${w.condition}` : `${input.month}월 · ${seasonOf(input.month)}`;
+  if (input.reference) return `${input.reference.name} 스타일 · ${when}`;
   return input.occasion && input.occasion !== '데일리' ? `${when} · ${input.occasion}` : when;
 };
 
@@ -81,6 +94,9 @@ export async function recommendOutfit(input: RecommendInput): Promise<Recommenda
         관심_카테고리: input.interests,
         선호_핏: input.fit ?? '정보 없음',
         피해야_할_옷_id: input.avoid ?? [],
+        참고_옷장: input.reference
+          ? { 이름: input.reference.name, 테마: input.reference.theme, 요약: input.reference.summary, 강조_아이템: input.reference.focus, 구성: input.reference.items }
+          : '없음',
         내_옷장: items.map(({ id, category, kind, color, material, season, fit }) => ({ id, category, kind, color, material, season, fit })),
       }),
       text: { format: zodTextFormat(Schema, 'outfit_recommendation') },
@@ -118,9 +134,19 @@ export function ruleRecommend(input: RecommendInput): Recommendation {
   const season = w ? (w.feels <= 9 ? '겨울' : w.feels <= 16 ? '가을' : w.feels <= 22 ? '봄' : '여름') : seasonOf(input.month);
   const fits = (i: RecItem) => !i.season || i.season === season || i.season === '사계절';
   const avoid = new Set(input.avoid ?? []);
+  // 참고 옷장이 있으면 종류·색이 닮은 내 옷을 우선한다 (강조 아이템은 가중치를 더 준다)
+  const ref = input.reference;
+  const likeness = (i: RecItem) => {
+    if (!ref) return 0;
+    const same = (r: Pick<RecItem, 'category' | 'kind' | 'color'>) => (r.category === i.category ? (r.kind === i.kind ? 2 : 0) + (r.color === i.color ? 1 : 0) : 0);
+    return Math.max(0, ...ref.items.map(same)) + (ref.focus ? same(ref.focus) * 2 : 0);
+  };
+  // 참고 모드에서는 닮은 정도를 우선하고, 정반대 계절 옷(겨울에 여름옷 등)만 뺀다
+  const opposite = (i: RecItem) => (season === '겨울' && i.season === '여름') || (season === '여름' && i.season === '겨울');
+  const ok = ref ? (i: RecItem) => !opposite(i) : fits;
   const first = (category: string) => {
-    const pool = input.items.filter((i) => i.category === category);
-    return (pool.find((i) => fits(i) && !avoid.has(i.id)) ?? pool.find(fits) ?? pool[0])?.id;
+    const pool = input.items.filter((i) => i.category === category).sort((a, b) => likeness(b) - likeness(a));
+    return (pool.find((i) => ok(i) && !avoid.has(i.id)) ?? pool.find(ok) ?? pool[0])?.id;
   };
   const needOuter = w ? w.feels <= 16 || w.max - w.min >= 10 : season === '겨울' || season === '가을';
   const style = input.styles[0] ?? '데일리';
@@ -130,10 +156,12 @@ export function ruleRecommend(input: RecommendInput): Recommendation {
     topId: first('상의'),
     bottomId: first('하의'),
     shoesId: first('신발'),
-    title: `${style} 무드 ${occasion}`,
-    reason: w
-      ? `오늘 ${w.temp}°C(체감 ${w.feels}°C)라 ${season} 옷 중에서 골랐어요. 가진 옷만으로 "${style}" 무드를 맞췄어요.`
-      : `${season}에 맞는 옷 중에서 골랐어요. 가진 옷만으로 "${style}" 무드를 맞췄어요.`,
+    title: ref ? `내 옷으로 따라 입는 ${ref.theme}` : `${style} 무드 ${occasion}`,
+    reason: ref
+      ? `${ref.name}에서 자주 보이는 아이템과 색에 가장 가까운 내 옷으로 골랐어요. ${w ? `오늘 ${w.temp}°C에 맞춰 ` : ''}가진 옷만으로 "${ref.theme}" 무드를 재현했어요.`
+      : w
+        ? `오늘 ${w.temp}°C(체감 ${w.feels}°C)라 ${season} 옷 중에서 골랐어요. 가진 옷만으로 "${style}" 무드를 맞췄어요.`
+        : `${season}에 맞는 옷 중에서 골랐어요. 가진 옷만으로 "${style}" 무드를 맞췄어요.`,
     tip: w && w.rainChance >= 50 ? `강수 확률 ${w.rainChance}%예요. 우산 챙기세요` : w && w.max - w.min >= 10 ? '일교차가 커요. 겉옷을 챙기세요' : undefined,
     basis: basisOf(input),
     source: 'rule',
