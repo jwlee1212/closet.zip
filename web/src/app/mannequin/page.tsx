@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Avatar, Button, ButtonPair, Card, ChipRow, Page, TextAction } from '@/components/ui';
+import { ClothThumb } from '@/components/ClothArt';
 import { Mannequin } from '@/components/Mannequin';
 import { Category, ClothingItem, itemName, recommendSize } from '@/data/mock';
 import { useApp } from '@/state/AppState';
@@ -76,6 +77,7 @@ export default function MannequinPage() {
             const it = cur(s);
             return (
               <button key={s} onClick={() => swap(s)} className="flex items-center gap-1.5 rounded-xl border border-line p-2.5 text-left active:bg-surface">
+                {it && <ClothThumb item={it} height={34} className="w-8 shrink-0" />}
                 <span className="min-w-0 flex-1">
                   <span className="block text-xs text-muted">{s}</span>
                   <span className="line-clamp-2 text-[13px] font-semibold">{it ? itemName(it) : s === '아우터' ? '없음' : '-'}</span>

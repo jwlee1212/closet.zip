@@ -5,7 +5,10 @@ import { ApiError, GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import { CATEGORIES, COLORS, KINDS, MATERIALS, SEASONS, type Category } from '@/data/mock';
 
+
 export type AnalyzeResult = {
+  productPhoto?: string;
+  generationNotice?: string;
   category: Category;
   kind: string;
   color: string;
@@ -157,4 +160,18 @@ export async function mockAnalyze(sample: boolean, notice = '데모 분석 (API 
     source: 'mock',
     notice,
   };
+}
+
+export async function generateProductPhoto(image: { mediaType: string; base64: string }, analysis: AnalyzeResult) {
+  const response = await getClient().models.generateContent({
+    model: process.env.GEMINI_IMAGE_MODEL || 'gemini-3.1-flash-image',
+    contents: [{ role: 'user', parts: [
+      { inlineData: { mimeType: image.mediaType, data: image.base64 } },
+      { text: `Create a new photorealistic e-commerce studio photograph of the single garment identified as ${analysis.color} ${analysis.kind}, ${analysis.material}. Use the reference for construction, pattern, hue, closures, neckline and proportions. Show the whole item neatly arranged front-on with generous margins on seamless off-white. Soft natural shadows. No people, hangers, surroundings, added branding or captions.` },
+    ] }],
+    config: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '1:1' }, abortSignal: AbortSignal.timeout(80000) },
+  });
+  const imagePart = response.candidates?.[0]?.content?.parts?.find(part => !part.thought && part.inlineData?.mimeType?.startsWith('image/'))?.inlineData;
+  if (!imagePart?.data) throw new Error('No product photograph returned');
+  return `data:${imagePart.mimeType};base64,${imagePart.data}`;
 }

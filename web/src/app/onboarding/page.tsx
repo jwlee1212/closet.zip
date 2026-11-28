@@ -3,9 +3,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
+import Image from 'next/image';
 import { Badge, Button, Page, TextAction } from '@/components/ui';
-import { ClosetCover, ClothThumb } from '@/components/ClothArt';
+import { ClosetCover } from '@/components/ClothArt';
 import { Mannequin } from '@/components/Mannequin';
 import { PUBLIC_CLOSETS } from '@/data/mock';
 
@@ -18,18 +18,7 @@ const SLIDES = [
 function Illustration({ step }: { step: number }) {
   const box = 'flex h-[380px] flex-col items-center justify-center rounded-2xl bg-surface';
   if (step === 0) {
-    return (
-      <div className={box}>
-        <div className="grid grid-cols-3 gap-2.5">
-          {PUBLIC_CLOSETS[0].items.slice(0, 6).map((it) => (
-            <ClothThumb key={it.id} item={it} height={92} className="w-[92px] bg-white!" />
-          ))}
-        </div>
-        <div className="mt-5 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-accent">
-          <Sparkles size={14} /> 상의 · 네이비 · 코튼 · 가을
-        </div>
-      </div>
-    );
+    return <Image src="/looks/folded.webp" width={540} height={640} priority alt="침대 위에 단정하게 개어 놓은 옷" className="h-[380px] w-full rounded-2xl object-cover" />;
   }
   if (step === 1) {
     return (

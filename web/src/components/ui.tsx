@@ -31,7 +31,7 @@ export function Page({
       {title !== undefined && <AppBar title={title} large={large} left={left} right={right} />}
       <main className={cx('flex flex-1 flex-col gap-4 px-4 pt-2', bottomPad, className)}>{children}</main>
       {footer && (
-        <div className={cx('fixed inset-x-0 z-20 mx-auto flex max-w-[430px] flex-col gap-2 bg-white/95 px-4 pt-2 pb-3 backdrop-blur', tabbed ? 'bottom-16' : 'bottom-0')}>
+        <div className={cx('fixed inset-x-0 z-20 mx-auto flex max-w-[390px] flex-col gap-2 bg-white/95 px-4 pt-2 pb-3 backdrop-blur', tabbed ? 'bottom-16' : 'bottom-0')}>
           {footer}
         </div>
       )}
@@ -329,7 +329,7 @@ export function ClosetCard({ closet, href, liked, onLike }: { closet: Closet; hr
 export function BottomSheet({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 mx-auto max-w-[430px]" role="dialog" aria-modal>
+    <div className="fixed inset-0 z-50 mx-auto max-w-[390px]" role="dialog" aria-modal>
       <button aria-label="닫기" onClick={onClose} className="animate-fade absolute inset-0 bg-black/45" />
       <div className="animate-sheet absolute inset-x-0 bottom-0 flex flex-col gap-3 rounded-t-[20px] bg-white p-5 pt-2.5 pb-[max(20px,env(safe-area-inset-bottom))]">
         <span className="mx-auto mb-1.5 h-1 w-10 rounded bg-line" />
@@ -361,7 +361,7 @@ export function PickerSheet({ open, title, options, value, onPick, onClose }: {
 export function Toast({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-28 z-[60] mx-auto flex max-w-[430px] justify-center px-6">
+    <div className="pointer-events-none fixed inset-x-0 bottom-28 z-[60] mx-auto flex max-w-[390px] justify-center px-6">
       <div className="animate-fade rounded-full bg-ink/92 px-4 py-2.5 text-center text-[13px] font-medium text-white">{message}</div>
     </div>
   );

@@ -30,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="ko" className="h-full antialiased">
       <body className="min-h-full">
         {/* 모바일 우선: 데스크톱에서는 가운데 폰 폭 컬럼으로 보여준다 */}
-        <div className="relative mx-auto min-h-dvh max-w-[430px] bg-white shadow-[0_0_40px_rgba(0,0,0,0.08)]">
+        <div className="relative mx-auto min-h-dvh max-w-[390px] bg-white shadow-[0_0_40px_rgba(0,0,0,0.08)]">
           <Suspense fallback={<Splash />}>
             <AppProvider>
               {children}

@@ -14,7 +14,7 @@ const TABS = [
 export function TabBar() {
   const path = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto flex h-16 max-w-[430px] border-t border-line bg-white pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto flex h-16 max-w-[390px] border-t border-line bg-white pb-[env(safe-area-inset-bottom)]">
       {TABS.map(({ href, label, icon: Icon }) => {
         const on = path === href;
         return (

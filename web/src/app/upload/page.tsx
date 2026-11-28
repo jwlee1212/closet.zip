@@ -70,7 +70,7 @@ export default function Upload() {
         <Button label="앨범에서 선택" icon={Images} variant="outline" onClick={() => albumRef.current?.click()} />
       </ButtonPair>
       {!pending && (
-        <button onClick={() => app.setPending({ sample: true })} className="self-center text-[13px] text-sub underline">
+        <button onClick={() => app.setPending({ sample: true, photoUri: "/looks/sweater.webp" })} className="self-center text-[13px] text-sub underline">
           사진 없이 샘플로 체험하기
         </button>
       )}

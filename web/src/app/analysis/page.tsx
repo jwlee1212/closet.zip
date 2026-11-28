@@ -10,7 +10,21 @@ import { CATEGORIES, COLORS, Category, KINDS, MATERIALS, SEASONS, itemName } fro
 import { useApp } from '@/state/AppState';
 import type { AnalyzeResult } from '@/server/analyze';
 
-type Attr = Omit<AnalyzeResult, 'confidence' | 'note' | 'source' | 'notice'>;
+async function thumbnail(uri: string) {
+  const img = new Image();
+  img.src = uri;
+  await img.decode();
+  const scale = Math.min(1, 480 / Math.max(img.width, img.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(img.width * scale));
+  canvas.height = Math.max(1, Math.round(img.height * scale));
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('이미지를 읽지 못했어요');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/webp', 0.85);
+}
+
+type Attr = Omit<AnalyzeResult, 'productPhoto' | 'generationNotice' | 'confidence' | 'note' | 'source' | 'notice'>;
 type Meta = Pick<AnalyzeResult, 'confidence' | 'note' | 'source' | 'notice'>;
 
 const FIELDS: { key: keyof Attr; label: string }[] = [
@@ -26,6 +40,10 @@ export default function Analysis() {
   const router = useRouter();
   const closet = app.activeCloset;
   const pending = app.pending;
+  const [generated, setGenerated] = useState<string>();
+  const [noticeText, setNoticeText] = useState<string>();
+  const [useOriginal, setUseOriginal] = useState(false);
+  const photo = (!useOriginal && generated) || pending?.photoUri;
   const [attr, setAttr] = useState<Attr | null>(null);
   const [meta, setMeta] = useState<Meta>();
   const [error, setError] = useState<string>();
@@ -43,7 +61,13 @@ export default function Analysis() {
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error ?? '분석에 실패했어요');
-        const { confidence, note, source, notice, ...a } = data as AnalyzeResult;
+        const { confidence, note, source, notice, productPhoto, generationNotice, ...a } = data as AnalyzeResult;
+        if (ctrl.signal.aborted) return;
+        const preview = productPhoto?.startsWith('/looks/') ? productPhoto
+          : productPhoto ? await thumbnail(productPhoto).catch(() => undefined) : undefined;
+        if (ctrl.signal.aborted) return;
+        setGenerated(preview);
+        setNoticeText(generationNotice);
         setAttr(a);
         setMeta({ confidence, note, source, notice });
       })
@@ -56,7 +80,7 @@ export default function Analysis() {
 
   const save = () => {
     if (!attr) return;
-    const ok = app.addItem({ ...attr, photoUri: pending?.photoUri });
+    const ok = app.addItem({ ...attr, photoUri: photo });
     if (!ok) { app.toast('옷장이 가득 찼어요'); return router.replace('/expand'); }
     app.setPending(undefined);
     app.toast(`${closet.name}에 저장했어요 (${closet.items.length + 1}/${closet.capacity})`);
@@ -85,7 +109,7 @@ export default function Analysis() {
             <>
               <Loader2 size={36} className="animate-spin text-accent" />
               <p className="text-[15px] font-semibold">AI가 옷을 분석하고 있어요</p>
-              <p className="text-[13px] text-sub">종류 · 색상 · 소재 · 시즌을 추출하는 중</p>
+              <p className="text-[13px] text-sub">옷의 특징을 확인하고 AI 상품 사진을 만드는 중</p>
             </>
           )}
         </div>
@@ -113,11 +137,11 @@ export default function Analysis() {
         />
       }
     >
-      <div className="flex items-center gap-3.5">
-        <div className="relative flex h-[150px] w-[130px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
-          {pending.photoUri
+      <div className="flex flex-col gap-3.5">
+        <div className="relative flex aspect-square w-full shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface">
+          {photo
             // eslint-disable-next-line @next/next/no-img-element -- 업로드 사진(data URL)
-            ? <img src={pending.photoUri} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            ? <img src={photo} alt={generated && !useOriginal ? "AI가 생성한 상품 사진" : "원본 사진"} className="absolute inset-0 h-full w-full object-contain" />
             : <ClothGlyph category={attr.category} color={attr.color} size={100} />}
         </div>
         <div className="flex flex-col gap-2">
@@ -130,6 +154,10 @@ export default function Analysis() {
         </div>
       </div>
 
+      {generated ? <div className="flex items-center justify-between rounded-xl bg-surface p-3 text-sm">
+        <span>{useOriginal ? '원본 사진' : pending.sample ? 'AI 상품 사진 · 샘플' : 'AI 상품 사진'}</span>
+        <TextAction label={useOriginal ? 'AI 상품 사진 보기' : '원본 보기'} onClick={() => setUseOriginal(!useOriginal)} />
+      </div> : <InfoBox>{noticeText ?? (pending.sample ? '샘플 상품 사진이에요. 직접 올린 옷은 AI가 상품 사진을 만들어요.' : '원본 사진으로 저장해요.')}</InfoBox>}
       <div>
         {FIELDS.map((f) => <Row key={f.key} label={f.label} value={attr[f.key]} onClick={() => setEditing(f.key)} />)}
       </div>

@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import { Mail, MessageCircle, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { ClothGlyph } from '@/components/ClothArt';
 
 function GoogleIcon() {
   return <span className="text-base font-bold">G</span>;
@@ -20,16 +19,9 @@ export default function Login() {
         </div>
         <h1 className="mt-5 text-[32px] font-bold tracking-tight">내 옷장</h1>
         <p className="mt-2 text-sm text-sub">옷장을 올리고, 다른 사람의 옷장을 구경해요</p>
-        <div className="mt-10 flex gap-2.5">
-          {(['아우터', '상의', '하의', '신발'] as const).map((c, i) => (
-            <div key={c} className="flex size-16 items-center justify-center rounded-2xl bg-surface">
-              <ClothGlyph category={c} color={['베이지', '네이비', '차콜', '화이트'][i]} size={46} />
-            </div>
-          ))}
-        </div>
       </div>
       <div className="flex flex-col gap-2 p-6">
-        <Button label="카카오로 시작하기" variant="kakao" icon={MessageCircle} href="/login/kakao" />
+        <Button label="카카오로 시작하기" variant="primary" icon={MessageCircle} href="/login/kakao" />
         <Link href="/login/google" className="flex h-[50px] items-center justify-center gap-2 rounded-xl border border-line text-[15px] font-semibold">
           <GoogleIcon /> Google로 시작하기
         </Link>

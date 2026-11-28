@@ -75,6 +75,12 @@ export const itemName = (i: Pick<ClothingItem, 'color' | 'kind'>) => (i.kind.sta
 
 type Spec = [Category, string, string, string?, string?, string?];
 
+export const garmentPhotos: Record<string, string> = {
+  '네이비 맨투맨': 'sweater', '화이트 셔츠': 'shirt', '베이지 치노 팬츠': 'chinos',
+  '블랙 패딩': 'puffer', '화이트 스니커즈': 'sneakers', '데님 데님 재킷': 'jacket',
+  '블랙 와이드 슬랙스': 'slacks', '데님 데님 팬츠': 'jeans',
+};
+
 function build(closetId: string, specs: Spec[], count: number, brand?: string): ClothingItem[] {
   const out: ClothingItem[] = [];
   for (let n = 0; n < count; n++) {
